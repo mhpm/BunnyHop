@@ -265,8 +265,12 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     });
   }
 
-  private updateAnimation(_isGrounded: boolean, _vx: number, _vy: number): void {
-    if (this.anims.currentAnim?.key !== 'bunny_idle_anim') {
+  private updateAnimation(isGrounded: boolean, vx: number, _vy: number): void {
+    if (!this.body) return;
+
+    if (isGrounded && Math.abs(vx) > 0) {
+      this.play('bunny_walk_anim', true);
+    } else {
       this.play('bunny_idle_anim', true);
     }
   }
