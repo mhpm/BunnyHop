@@ -46,7 +46,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
 
     // Hitbox around Bunny's body and feet (bottom aligned at y=176)
     this.setSize(60, 120);
-    this.setOffset(34, 50); // ajuste el hitbox
+    this.setOffset(34, 40); // ajuste el hitbox
     this.setCollideWorldBounds(true);
     this.setBounce(0);
 

@@ -13,12 +13,12 @@ export class PreloadScene extends Phaser.Scene {
     // 1. Load the 8-frame Bunny Spritesheets
     this.load.spritesheet('bunny_idle', '/assets/sprites/bunny/bunny_idle.png', {
       frameWidth: 128,
-      frameHeight: 176,
+      frameHeight: 175,
     });
     // bunny walking
     this.load.spritesheet('bunny_walk', '/assets/sprites/bunny/bunny_walking.png', {
       frameWidth: 128,
-      frameHeight: 176,
+      frameHeight: 175,
     });
 
 
