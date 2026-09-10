@@ -9,15 +9,24 @@ export class Carrot extends Phaser.Physics.Arcade.Sprite {
   private isCollected = false;
 
   constructor(scene: Phaser.Scene, x: number, y: number, isGold = false, particles: ParticleManager) {
-    super(scene, x, y, isGold ? 'rich_carrot_gold' : 'rich_carrot');
+    super(scene, x, y, isGold ? 'golden_carrot' : 'rich_carrot');
     this.isGold = isGold;
     this.particles = particles;
 
     scene.add.existing(this);
     scene.physics.add.existing(this, true); // Static physics body
 
-    this.setSize(28, 42);
-    this.setOffset(6, 4);
+    const baseScale = isGold ? 0.48 : 1.0;
+    this.setScale(baseScale);
+
+    if (this.isGold) {
+      this.play('golden_carrot_anim');
+      this.setSize(64, 84);
+      this.setOffset(32, 22);
+    } else {
+      this.setSize(28, 42);
+      this.setOffset(6, 4);
+    }
 
     // Floating bobbing motion
     scene.tweens.add({
@@ -32,8 +41,8 @@ export class Carrot extends Phaser.Physics.Arcade.Sprite {
     // Subtle scale pulsing
     scene.tweens.add({
       targets: this,
-      scaleX: 1.08,
-      scaleY: 1.08,
+      scaleX: baseScale * 1.08,
+      scaleY: baseScale * 1.08,
       duration: 900,
       yoyo: true,
       repeat: -1,
@@ -47,7 +56,7 @@ export class Carrot extends Phaser.Physics.Arcade.Sprite {
 
     if (this.isGold) {
       audioManager.playCollectGoldCarrot();
-      this.particles.emitStars(this.x, this.y, 12, 0xffeb3b);
+      this.particles.emitStars(this.x, this.y, 14, 0xffeb3b);
       useGameStore.getState().addCarrot(5);
     } else {
       audioManager.playCollectCarrot();
@@ -55,12 +64,14 @@ export class Carrot extends Phaser.Physics.Arcade.Sprite {
       useGameStore.getState().addCarrot(1);
     }
 
+    const baseScale = this.isGold ? 0.48 : 1.0;
+
     // Floating collect animation
     this.scene.tweens.add({
       targets: this,
       y: this.y - 32,
-      scaleX: 1.4,
-      scaleY: 1.4,
+      scaleX: baseScale * 1.4,
+      scaleY: baseScale * 1.4,
       alpha: 0,
       duration: 380,
       ease: 'Back.easeOut',

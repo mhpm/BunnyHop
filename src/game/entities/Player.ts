@@ -10,7 +10,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
 
   // Physics constants
   private readonly moveSpeed = 230;
-  private readonly jumpForce = 490;
+  private readonly jumpForce = 510;
   private readonly bounceForce = 410;
 
   // Jump helpers
@@ -21,6 +21,8 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   private wasGrounded = false;
   private lastFallVelocity = 0;
   public isJumping = false;
+  private wasTouchJump = false;
+  private hasCutJump = false;
 
   // State flags
   public isHurt = false;
@@ -92,20 +94,24 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     // 2. Coyote time & jump buffer counters
     if (isGrounded) {
       this.coyoteTimer = this.coyoteTime;
+      this.hasCutJump = false;
     } else {
       this.coyoteTimer = Math.max(0, this.coyoteTimer - delta);
     }
+
+    // Detect just-pressed edge for touch jump (maintains touchJump as held state)
+    const touchJumpJustPressed = this.touchJump && !this.wasTouchJump;
+    this.wasTouchJump = this.touchJump;
 
     // Check jump input
     const jumpPressed =
       (this.cursors?.up && Phaser.Input.Keyboard.JustDown(this.cursors.up)) ||
       (this.wasdKeys?.up && Phaser.Input.Keyboard.JustDown(this.wasdKeys.up)) ||
       (this.wasdKeys?.space && Phaser.Input.Keyboard.JustDown(this.wasdKeys.space)) ||
-      this.touchJump;
+      touchJumpJustPressed;
 
     if (jumpPressed) {
       this.jumpBufferTimer = this.jumpBufferTime;
-      this.touchJump = false;
     } else {
       this.jumpBufferTimer = Math.max(0, this.jumpBufferTimer - delta);
     }
@@ -130,15 +136,16 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         this.doJump();
       }
 
-      // Variable jump height: release jump early to cut upward velocity
+      // Variable jump height: release jump early to cut upward velocity smoothly once
       const jumpHolding =
         this.cursors?.up?.isDown ||
         this.wasdKeys?.up?.isDown ||
         this.wasdKeys?.space?.isDown ||
         this.touchJump;
 
-      if (!jumpHolding && body.velocity.y < -120) {
-        this.setVelocityY(body.velocity.y * 0.5);
+      if (!this.hasCutJump && !jumpHolding && body.velocity.y < -160) {
+        this.setVelocityY(Math.max(body.velocity.y * 0.55, -250));
+        this.hasCutJump = true;
       }
     }
 
@@ -154,6 +161,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     this.jumpBufferTimer = 0;
     this.isStomping = false;
     this.isJumping = true;
+    this.hasCutJump = false;
     audioManager.playJump();
     this.particles.emitDust(this.x, this.y + 30, 4);
 

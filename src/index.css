@@ -650,7 +650,10 @@ html, body {
   justify-content: center;
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
   cursor: pointer;
-  touch-action: manipulation;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
   transition: transform 0.08s ease, background 0.08s ease;
 }
 

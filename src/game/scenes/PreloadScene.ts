@@ -38,7 +38,10 @@ export class PreloadScene extends Phaser.Scene {
 
     // 3. Load Items (Carrots)
     this.load.image('rich_carrot', '/assets/items/carrot_rich.png');
-    this.load.image('rich_carrot_gold', '/assets/items/carrot_gold_rich.png');
+    this.load.spritesheet('golden_carrot', '/assets/items/golden_carrot.png', {
+      frameWidth: 128,
+      frameHeight: 128,
+    });
 
     // 4. Load Parallax Background & Foreground
     this.load.image('game_background', '/assets/background/background.png');
@@ -71,6 +74,14 @@ export class PreloadScene extends Phaser.Scene {
       key: 'bunny_jump_anim',
       frames: this.anims.generateFrameNumbers('bunny_jump', { start: 0, end: 0 }),
       frameRate: 1,
+      repeat: -1,
+    });
+
+    // Golden Carrot Sparkling Animation: 4 frames (0 to 3) at 128w * 128h
+    this.anims.create({
+      key: 'golden_carrot_anim',
+      frames: this.anims.generateFrameNumbers('golden_carrot', { start: 0, end: 3 }),
+      frameRate: 6,
       repeat: -1,
     });
   }

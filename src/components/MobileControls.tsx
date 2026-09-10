@@ -25,15 +25,44 @@ export const MobileControls: React.FC<MobileControlsProps> = ({ gameScene }) => 
     }
   };
 
+  const createPointerHandlers = (action: (active: boolean) => void) => ({
+    onPointerDown: (e: React.PointerEvent<HTMLButtonElement>) => {
+      e.preventDefault();
+      try {
+        e.currentTarget.setPointerCapture(e.pointerId);
+      } catch (_) {}
+      action(true);
+    },
+    onPointerUp: (e: React.PointerEvent<HTMLButtonElement>) => {
+      e.preventDefault();
+      try {
+        if (e.currentTarget.hasPointerCapture(e.pointerId)) {
+          e.currentTarget.releasePointerCapture(e.pointerId);
+        }
+      } catch (_) {}
+      action(false);
+    },
+    onPointerCancel: (e: React.PointerEvent<HTMLButtonElement>) => {
+      e.preventDefault();
+      try {
+        if (e.currentTarget.hasPointerCapture(e.pointerId)) {
+          e.currentTarget.releasePointerCapture(e.pointerId);
+        }
+      } catch (_) {}
+      action(false);
+    },
+    onContextMenu: (e: React.MouseEvent) => {
+      e.preventDefault();
+    },
+  });
+
   return (
     <div className="mobile-controls-container">
       {/* Left / Right D-Pad */}
       <div className="mobile-dpad">
         <button
           className="touch-btn touch-btn-dir"
-          onPointerDown={() => setLeft(true)}
-          onPointerUp={() => setLeft(false)}
-          onPointerLeave={() => setLeft(false)}
+          {...createPointerHandlers(setLeft)}
           aria-label="Izquierda"
         >
           <ArrowLeft size={32} />
@@ -41,9 +70,7 @@ export const MobileControls: React.FC<MobileControlsProps> = ({ gameScene }) => 
 
         <button
           className="touch-btn touch-btn-dir"
-          onPointerDown={() => setRight(true)}
-          onPointerUp={() => setRight(false)}
-          onPointerLeave={() => setRight(false)}
+          {...createPointerHandlers(setRight)}
           aria-label="Derecha"
         >
           <ArrowRight size={32} />
@@ -54,9 +81,7 @@ export const MobileControls: React.FC<MobileControlsProps> = ({ gameScene }) => 
       <div className="mobile-actions">
         <button
           className="touch-btn touch-btn-jump"
-          onPointerDown={() => triggerJump(true)}
-          onPointerUp={() => triggerJump(false)}
-          onPointerLeave={() => triggerJump(false)}
+          {...createPointerHandlers(triggerJump)}
           aria-label="Saltar"
         >
           <ArrowUp size={36} />
