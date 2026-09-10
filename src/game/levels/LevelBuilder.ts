@@ -8,7 +8,8 @@ import { Caterpillar } from "../entities/Caterpillar";
 import { Snail } from "../entities/Snail";
 import { Beetle } from "../entities/Beetle";
 import { ParticleManager } from "../systems/ParticleManager";
-import { EnemyType, PropType } from "./levelData";
+import { EnemyType, PropType, GroundElementPlacement } from "./levelData";
+import { GroundElementId, GROUND_ELEMENTS_MAP } from "../config/groundElements";
 
 export interface LevelBuilderContext {
   scene: Phaser.Scene;
@@ -40,40 +41,42 @@ export class LevelBuilder {
 
   /**
    * Crea uno o varios bloques de suelo consecutivos en la posición indicada.
-   *
-   * @param x Posición X donde comienza el bloque (borde izquierdo).
-   * @param y Altura del suelo (superficie donde pisa el personaje).
-   * @param count Cantidad de bloques consecutivos (por defecto 1).
-   * @returns Array con los sprites creados.
+   * Permite elegir cualquier elemento de suelo del catálogo (por defecto 'ground_104').
    */
   public createGroundSegment(
     x: number,
     y: number,
     count = 1,
+    elementId: GroundElementId = "ground_104",
   ): Phaser.Physics.Arcade.Sprite[] {
     const createdTiles: Phaser.Physics.Arcade.Sprite[] = [];
     const { platforms } = this.context;
+    const meta =
+      GROUND_ELEMENTS_MAP[elementId] ?? GROUND_ELEMENTS_MAP["ground_104"];
+
+    const tileW = meta.width;
+    const tileH = meta.height;
+    const hb = meta.hitbox;
+    const overlap = 10;
 
     for (let i = 0; i < count; i++) {
-      const tileX =
-        x + i * LevelBuilder.TILE_WIDTH + LevelBuilder.TILE_WIDTH / 2;
-      const tileY =
-        y + LevelBuilder.TILE_HEIGHT / 2 + LevelBuilder.TILE_Y_OFFSET;
+      const tileX = x + i * (tileW - overlap) + tileW / 2;
+      const tileY = y + tileH / 2 + LevelBuilder.TILE_Y_OFFSET;
 
       const tile = platforms.create(
         tileX,
         tileY,
-        "ground_tile",
+        meta.id,
       ) as Phaser.Physics.Arcade.Sprite;
       tile.setDepth(0);
 
       // Calibración de la hitbox física sin deformar el sprite visual
       const staticBody = tile.body as Phaser.Physics.Arcade.StaticBody;
-      staticBody.width = LevelBuilder.HITBOX_WIDTH;
-      staticBody.height = LevelBuilder.HITBOX_HEIGHT;
-      staticBody.offset.set(LevelBuilder.HITBOX_OFFSET_X, LevelBuilder.HITBOX_OFFSET_Y);
-      staticBody.position.x = tile.x - tile.displayOriginX + LevelBuilder.HITBOX_OFFSET_X;
-      staticBody.position.y = tile.y - tile.displayOriginY + LevelBuilder.HITBOX_OFFSET_Y;
+      staticBody.width = hb.width;
+      staticBody.height = hb.height;
+      staticBody.offset.set(hb.offsetX, hb.offsetY);
+      staticBody.position.x = tile.x - tile.displayOriginX + hb.offsetX;
+      staticBody.position.y = tile.y - tile.displayOriginY + hb.offsetY;
 
       createdTiles.push(tile);
     }
@@ -83,28 +86,91 @@ export class LevelBuilder {
 
   /**
    * Crea una plataforma flotante tipo isla.
-   *
-   * @param x Posición X de la plataforma.
-   * @param y Posición Y de la plataforma.
-   * @returns El sprite de la plataforma con su colisión configurada.
+   * Permite elegir cualquier elemento de ground_elements (por defecto 'ground_044').
    */
-  public createPlatform(x: number, y: number): Phaser.Physics.Arcade.Sprite {
+  public createPlatform(
+    x: number,
+    y: number,
+    elementId: GroundElementId = "ground_044",
+    customWidth?: number,
+    customHeight?: number,
+  ): Phaser.Physics.Arcade.Sprite {
     const { platforms } = this.context;
+    const meta =
+      GROUND_ELEMENTS_MAP[elementId] ?? GROUND_ELEMENTS_MAP["ground_044"];
+
     const platform = platforms.create(
-      x + 92,
-      y + 40,
-      "rich_platform",
+      x + meta.width / 2,
+      y + meta.height / 2,
+      meta.id,
     ) as Phaser.Physics.Arcade.Sprite;
 
+    const hb = meta.hitbox;
+    const bw = customWidth ?? hb.width;
+    const bh = customHeight ?? hb.height;
+
     const staticBody = platform.body as Phaser.Physics.Arcade.StaticBody;
-    staticBody.width = 140;
-    staticBody.height = 30;
-    staticBody.offset.set(6, 45);
-    staticBody.position.x = platform.x - platform.displayOriginX + 6;
-    staticBody.position.y = platform.y - platform.displayOriginY + 45;
+    staticBody.width = bw;
+    staticBody.height = bh;
+    staticBody.offset.set(hb.offsetX, hb.offsetY);
+    staticBody.position.x = platform.x - platform.displayOriginX + hb.offsetX;
+    staticBody.position.y = platform.y - platform.displayOriginY + hb.offsetY;
     platform.setDepth(0);
 
     return platform;
+  }
+
+  /**
+   * Crea una pieza individual o modular libre del catálogo de ground_elements.
+   * Permite combinar cualquier elemento con escala, volteo (flipX), profundidad y colisión sólida opcional.
+   */
+  public createGroundElement(
+    config: GroundElementPlacement,
+  ): Phaser.Physics.Arcade.Sprite | Phaser.GameObjects.Image {
+    const { platforms, scene } = this.context;
+    const meta = GROUND_ELEMENTS_MAP[config.element];
+    if (!meta) {
+      console.warn(`[LevelBuilder] Elemento no encontrado: ${config.element}`);
+      return scene.add.image(config.x, config.y, "ground_tile");
+    }
+
+    const scale = config.scale ?? 1;
+    const depth = config.depth ?? 0;
+    const isSolid = config.isSolid !== false;
+    const posX = config.x + (meta.width * scale) / 2;
+    const posY = config.y + (meta.height * scale) / 2;
+
+    if (isSolid) {
+      const sprite = platforms.create(
+        posX,
+        posY,
+        meta.id,
+      ) as Phaser.Physics.Arcade.Sprite;
+      sprite.setScale(scale);
+      sprite.setFlipX(!!config.flipX);
+      sprite.setDepth(depth);
+
+      const hb = meta.hitbox;
+      const bw = (config.hitbox?.width ?? hb.width) * scale;
+      const bh = (config.hitbox?.height ?? hb.height) * scale;
+      const ox = (config.hitbox?.offsetX ?? hb.offsetX) * scale;
+      const oy = (config.hitbox?.offsetY ?? hb.offsetY) * scale;
+
+      const staticBody = sprite.body as Phaser.Physics.Arcade.StaticBody;
+      staticBody.width = bw;
+      staticBody.height = bh;
+      staticBody.offset.set(ox, oy);
+      staticBody.position.x = sprite.x - sprite.displayOriginX + ox;
+      staticBody.position.y = sprite.y - sprite.displayOriginY + oy;
+
+      return sprite;
+    } else {
+      const img = scene.add.image(posX, posY, meta.id);
+      img.setScale(scale);
+      img.setFlipX(!!config.flipX);
+      img.setDepth(depth);
+      return img;
+    }
   }
 
   /**

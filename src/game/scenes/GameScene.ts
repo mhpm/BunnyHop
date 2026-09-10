@@ -10,8 +10,10 @@ import {
   LevelConfig,
   PropType,
   EnemyType,
+  GroundElementPlacement,
 } from "../levels/levelData";
 import { LevelBuilder } from "../levels/LevelBuilder";
+import { GroundElementId, GROUND_ELEMENTS_MAP } from "../config/groundElements";
 import { useGameStore } from "../../store/gameStore";
 
 export class GameScene extends Phaser.Scene {
@@ -150,12 +152,23 @@ export class GameScene extends Phaser.Scene {
     x: number,
     y: number,
     count = 1,
+    element?: GroundElementId,
   ): Phaser.Physics.Arcade.Sprite[] {
-    return this.levelBuilder.createGroundSegment(x, y, count);
+    return this.levelBuilder.createGroundSegment(x, y, count, element);
   }
 
-  public createPlatform(x: number, y: number): Phaser.Physics.Arcade.Sprite {
-    return this.levelBuilder.createPlatform(x, y);
+  public createPlatform(
+    x: number,
+    y: number,
+    element?: GroundElementId,
+    width?: number,
+    height?: number,
+  ): Phaser.Physics.Arcade.Sprite {
+    return this.levelBuilder.createPlatform(x, y, element, width, height);
+  }
+
+  public createGroundElement(config: GroundElementPlacement) {
+    return this.levelBuilder.createGroundElement(config);
   }
 
   public createBridge(
@@ -199,17 +212,24 @@ export class GameScene extends Phaser.Scene {
     // 1. Elementos escénicos / Props
     config.props.forEach((p) => this.createProp(p.type, p.x, p.y, p.scale));
 
-    // 2. Segmentos de suelo continuo
+    // 2. Segmentos de suelo continuo (soporta variantes de ground_elements)
     config.groundSegments.forEach((g) => {
+      const meta = g.element ? GROUND_ELEMENTS_MAP[g.element] : undefined;
+      const tileWidth = meta?.width ?? LevelBuilder.TILE_WIDTH;
       const tileCount =
-        g.width > 0 ? Math.ceil(g.width / LevelBuilder.TILE_WIDTH) : 10;
-      this.createGroundSegment(g.x, g.y, tileCount);
+        g.width > 0 ? Math.ceil(g.width / tileWidth) : 10;
+      this.createGroundSegment(g.x, g.y, tileCount, g.element);
     });
 
-    // 3. Plataformas flotantes
+    // 3. Plataformas flotantes (soporta cualquier isla/elemento de ground_elements)
     config.floatingPlatforms.forEach((plat) =>
-      this.createPlatform(plat.x, plat.y),
+      this.createPlatform(plat.x, plat.y, plat.element, plat.width, plat.height),
     );
+
+    // 3.5 Elementos modulares sueltos / combinados de ground_elements
+    if (config.groundElements) {
+      config.groundElements.forEach((el) => this.createGroundElement(el));
+    }
 
     // 4. Puentes de madera
     config.bridges.forEach((b) => this.createBridge(b.x, b.y, b.width));

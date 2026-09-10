@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { AssetGenerator } from '../assets/assetGenerator';
+import { GROUND_ELEMENTS_LIST } from '../config/groundElements';
 
 export class PreloadScene extends Phaser.Scene {
   constructor() {
@@ -22,9 +23,13 @@ export class PreloadScene extends Phaser.Scene {
     });
 
 
-    // 2. Load Platform & Ground
+    // 2. Load Platform & Ground (incluyendo todo el catálogo de ground_elements)
     this.load.image('rich_platform', '/assets/environment/platform_float.png');
     this.load.image('ground_tile', '/assets/environment/ground_tile.png');
+
+    GROUND_ELEMENTS_LIST.forEach((el) => {
+      this.load.image(el.id, `/assets/environment/ground_elements/${el.file}`);
+    });
 
     // 3. Load Items (Carrots)
     this.load.image('rich_carrot', '/assets/items/carrot_rich.png');
