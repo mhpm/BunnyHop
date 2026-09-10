@@ -114,7 +114,7 @@ export const LEVEL_1_CONFIG: LevelConfig = {
   worldName: "Mundo 1 — Pradera",
   width: 20800,
   height: 720,
-  spawn: { x: 8920, y: 420 },
+  spawn: { x: 110, y: 520 },
 
   // =========================================================================
   // 1. SEGMENTOS DE SUELO CONTINUO (Tramos de tierra firme con variantes)
