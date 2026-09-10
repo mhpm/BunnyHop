@@ -8,40 +8,44 @@ export interface PlatformConfig {
 
 export interface PropConfig {
   type:
-    | 'tree'
-    | 'tree_alt'
-    | 'bush'
-    | 'bush_large'
-    | 'rock'
-    | 'sign'
-    | 'fence'
-    | 'fence_white'
-    | 'windmill'
-    | 'barn'
-    | 'lantern'
-    | 'haystack'
-    | 'haycart'
-    | 'barrel'
-    | 'carrot_sack'
-    | 'sunflower'
-    | 'corn'
-    | 'tomato'
-    | 'pumpkin'
-    | 'strawberry'
-    | 'cow'
-    | 'hen'
-    | 'chick'
-    | 'water_pond';
+    | "tree"
+    | "tree_alt"
+    | "bush"
+    | "bush_large"
+    | "rock"
+    | "sign"
+    | "fence"
+    | "fence_white"
+    | "windmill"
+    | "barn"
+    | "lantern"
+    | "haystack"
+    | "haycart"
+    | "barrel"
+    | "carrot_sack"
+    | "sunflower"
+    | "corn"
+    | "tomato"
+    | "pumpkin"
+    | "strawberry"
+    | "cow"
+    | "hen"
+    | "chick"
+    | "water_pond";
   x: number;
   y: number;
   scale?: number;
 }
 
+export type PropType = PropConfig["type"];
+
 export interface EnemyConfig {
-  type: 'ladybug' | 'caterpillar' | 'snail' | 'beetle';
+  type: "ladybug" | "caterpillar" | "snail" | "beetle";
   x: number;
   y: number;
 }
+
+export type EnemyType = EnemyConfig["type"];
 
 export interface CollectibleConfig {
   x: number;
@@ -73,20 +77,25 @@ export interface LevelConfig {
 }
 
 export const LEVEL_1_CONFIG: LevelConfig = {
-  id: 'level_1_1',
-  name: 'Pradera Soleada (Sunny Meadow)',
-  worldName: 'Mundo 1 — Pradera',
-  width: 3200,
+  id: "level_1_1",
+  name: "Pradera Soleada (Sunny Meadow)",
+  worldName: "Mundo 1 — Pradera",
+  width: 10200,
   height: 720,
-  spawn: { x: 120, y: 550 },
+  spawn: { x: 110, y: 500 }, // bunny initial position
 
   // Ground platform across the level where the bunny can walk
   groundSegments: [
-    { x: 0, y: 620, width: 3200, height: 100 },
+    { x: 0, y: 600, width: 735, height: 0 }, // Tramo 1 (3 bloques)
+    { x: 900, y: 550, width: 980, height: 0 }, // Tramo 2 (más alto, salto de vacío en medio)
+    { x: 2100, y: 600, width: 1100, height: 0 }, // Tramo 3
   ],
 
   // Floating platforms (removed secondary platforms)
-  floatingPlatforms: [],
+  floatingPlatforms: [
+    { x: 200, y: 550, width: 247, height: 0, isFloating: true },
+    { x: 500, y: 500, width: 247, height: 0, isFloating: true },
+  ],
 
   // Water gap hazards (removed)
   waterHazards: [],
@@ -102,23 +111,23 @@ export const LEVEL_1_CONFIG: LevelConfig = {
 
   // Collectibles: Carrots along the walking platform
   carrots: [
-    { x: 300, y: 580 },
-    { x: 420, y: 580 },
-    { x: 540, y: 580 },
-    { x: 680, y: 580 },
-    { x: 820, y: 580 },
-    { x: 960, y: 580, isGold: true },
-    { x: 1120, y: 580 },
-    { x: 1280, y: 580 },
-    { x: 1440, y: 580 },
-    { x: 1600, y: 580, isGold: true },
-    { x: 1780, y: 580 },
-    { x: 1960, y: 580 },
-    { x: 2140, y: 580 },
-    { x: 2320, y: 580 },
-    { x: 2500, y: 580, isGold: true },
-    { x: 2700, y: 580 },
-    { x: 2900, y: 580 },
+    { x: 300, y: 550 },
+    { x: 420, y: 550 },
+    { x: 540, y: 550 },
+    { x: 680, y: 550 },
+    { x: 820, y: 550 },
+    { x: 960, y: 550, isGold: true },
+    { x: 1120, y: 550 },
+    { x: 1280, y: 550 },
+    { x: 1440, y: 550 },
+    { x: 1600, y: 550, isGold: true },
+    { x: 1780, y: 550 },
+    { x: 1960, y: 550 },
+    { x: 2140, y: 550 },
+    { x: 2320, y: 550 },
+    { x: 2500, y: 550, isGold: true },
+    { x: 2700, y: 550 },
+    { x: 2900, y: 550 },
   ],
 
   // Wooden breakable crates (removed)

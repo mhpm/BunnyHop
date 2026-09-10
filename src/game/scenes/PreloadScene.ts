@@ -24,15 +24,15 @@ export class PreloadScene extends Phaser.Scene {
 
     // 2. Load Platform & Ground
     this.load.image('rich_platform', '/assets/environment/platform_float.png');
-    this.load.image('rich_ground', '/assets/environment/ground_tile.png');
+    this.load.image('ground_tile', '/assets/environment/ground_tile.png');
 
     // 3. Load Items (Carrots)
     this.load.image('rich_carrot', '/assets/items/carrot_rich.png');
     this.load.image('rich_carrot_gold', '/assets/items/carrot_gold_rich.png');
 
-    // 4. Load Parallax Background
+    // 4. Load Parallax Background & Foreground
     this.load.image('game_background', '/assets/background/background.png');
-    //this.load.image('rich_clouds', '/assets/background/clouds_rich.png');
+    this.load.image('game_foreground', '/assets/background/background_front.png?v=2');
   }
 
   public create(): void {

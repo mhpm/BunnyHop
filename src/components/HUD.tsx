@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useGameStore } from '../store/gameStore';
-import { Pause, Volume2, VolumeX, Music, HelpCircle } from 'lucide-react';
+import { Pause, Volume2, VolumeX, Music, HelpCircle, Maximize, Minimize } from 'lucide-react';
 import { audioManager } from '../game/systems/AudioManager';
 
 interface HUDProps {
@@ -19,6 +19,26 @@ export const HUD: React.FC<HUDProps> = ({ onPause, onOpenHelp }) => {
     toggleSound,
     toggleMusic,
   } = useGameStore();
+
+  const [isFullscreen, setIsFullscreen] = useState<boolean>(
+    typeof document !== 'undefined' ? Boolean(document.fullscreenElement) : false
+  );
+
+  useEffect(() => {
+    const handleFsChange = () => {
+      setIsFullscreen(Boolean(document.fullscreenElement));
+    };
+    document.addEventListener('fullscreenchange', handleFsChange);
+    return () => document.removeEventListener('fullscreenchange', handleFsChange);
+  }, []);
+
+  const handleToggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen?.().catch(() => {});
+    } else {
+      document.exitFullscreen?.().catch(() => {});
+    }
+  };
 
   const handleToggleSound = () => {
     toggleSound();
@@ -73,6 +93,15 @@ export const HUD: React.FC<HUDProps> = ({ onPause, onOpenHelp }) => {
           aria-label={musicEnabled ? 'Silenciar Música' : 'Activar Música'}
         >
           <Music size={20} />
+        </button>
+
+        <button
+          onClick={handleToggleFullscreen}
+          className="hud-btn"
+          title={isFullscreen ? 'Salir de Pantalla Completa' : 'Pantalla Completa'}
+          aria-label={isFullscreen ? 'Salir de Pantalla Completa' : 'Pantalla Completa'}
+        >
+          {isFullscreen ? <Minimize size={20} /> : <Maximize size={20} />}
         </button>
 
         <button

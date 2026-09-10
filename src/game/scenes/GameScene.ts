@@ -1,15 +1,12 @@
 import Phaser from 'phaser';
 import { Player } from '../entities/Player';
 import { Enemy } from '../entities/Enemy';
-import { Ladybug } from '../entities/Ladybug';
-import { Caterpillar } from '../entities/Caterpillar';
-import { Snail } from '../entities/Snail';
-import { Beetle } from '../entities/Beetle';
 import { Carrot } from '../objects/Carrot';
 import { BreakableBox } from '../objects/BreakableBox';
 import { GoalShrine } from '../objects/GoalShrine';
 import { ParticleManager } from '../systems/ParticleManager';
-import { LEVEL_1_CONFIG, LevelConfig } from '../levels/levelData';
+import { LEVEL_1_CONFIG, LevelConfig, PropType, EnemyType } from '../levels/levelData';
+import { LevelBuilder } from '../levels/LevelBuilder';
 import { useGameStore } from '../../store/gameStore';
 
 export class GameScene extends Phaser.Scene {
@@ -21,9 +18,14 @@ export class GameScene extends Phaser.Scene {
   private carrots: Carrot[] = [];
   private goalShrine?: GoalShrine;
   private currentLevelConfig: LevelConfig = LEVEL_1_CONFIG;
+  public levelBuilder!: LevelBuilder;
 
-  // Parallax background layers
+  // Parallax layers
   private bgClouds!: Phaser.GameObjects.TileSprite;
+  private bgTile!: Phaser.GameObjects.TileSprite;
+  private fgTile!: Phaser.GameObjects.TileSprite;
+  private readonly FG_TEXTURE_HEIGHT = 370;
+  private readonly FG_SCALE = 0.35;
 
   constructor() {
     super({ key: 'GameScene' });
@@ -36,7 +38,7 @@ export class GameScene extends Phaser.Scene {
     useGameStore.getState().resetLevelStats(config.carrots.length);
 
     // Set world physics bounds
-    this.physics.world.setBounds(0, 0, config.width, config.height + 100);
+    this.physics.world.setBounds(0, 0, config.width, Math.max(config.height + 100, 1400));
 
     // Initialize particle manager
     this.particles = new ParticleManager(this);
@@ -49,6 +51,16 @@ export class GameScene extends Phaser.Scene {
     this.boxes = this.physics.add.staticGroup();
     this.enemies = [];
     this.carrots = [];
+
+    // Initialize LevelBuilder (SOLID Pattern)
+    this.levelBuilder = new LevelBuilder({
+      scene: this,
+      platforms: this.platforms,
+      boxes: this.boxes,
+      enemies: this.enemies,
+      carrots: this.carrots,
+      particles: this.particles,
+    });
 
     // Build World Geometry & Objects
     this.buildLevel(config);
@@ -74,243 +86,116 @@ export class GameScene extends Phaser.Scene {
   }
 
   private createParallaxBackground(): void {
-    // User requested panoramic background (2172 x 724)
-    // ScrollFactor (0.465, 0) smoothly tracks across the 3200px level without repeating
-    this.add.image(0, 0, 'game_background')
+    const viewW = this.scale.width;
+    const viewH = this.scale.height;
+
+    // 1. Background (fondo lejano detrás de todo)
+    this.bgTile = this.add.tileSprite(0, 0, viewW, viewH, 'game_background')
       .setOrigin(0, 0)
-      .setScrollFactor(0.465, 0)
+      .setScrollFactor(0)
       .setDepth(-40);
 
-    // Subtle gentle clouds drift in upper sky
-    //this.bgClouds = this.add.tileSprite(0, 10, 1280 * 2, 100, 'rich_clouds')
-    //  .setOrigin(0, 0)
-    //  .setScrollFactor(0.12, 0)
-    //  .setAlpha(0.65)
-    //  .setDepth(-35);
+    // 2. Foreground (frente en primer plano: abajo de la pantalla y más pequeño)
+    const fgHeight = this.FG_TEXTURE_HEIGHT * this.FG_SCALE;
+    this.fgTile = this.add.tileSprite(0, viewH, viewW, fgHeight, 'game_foreground')
+      .setOrigin(0, 1)
+      .setScrollFactor(0)
+      .setDepth(100);
+
+    this.updateBackgroundSize();
   }
 
+  private updateBackgroundSize(): void {
+    const viewW = this.scale.width;
+    const viewH = this.scale.height;
+
+    // Background lejano
+    if (this.bgTile) {
+      this.bgTile.setSize(viewW, viewH);
+      const scale = Math.max(1, viewH / 768);
+      this.bgTile.setTileScale(scale, scale);
+    }
+
+    // Foreground del frente (anclado abajo de la pantalla, pequeño y sutil)
+    if (this.fgTile) {
+      const fgHeight = this.FG_TEXTURE_HEIGHT * this.FG_SCALE;
+      this.fgTile.setPosition(0, viewH);
+      this.fgTile.setSize(viewW, fgHeight);
+      this.fgTile.setTileScale(this.FG_SCALE, this.FG_SCALE);
+      this.fgTile.tilePositionY = 0;
+    }
+  }
+
+  /**
+   * Métodos declarativos de construcción de nivel (disponibles para diseño a medida)
+   */
+  public createGroundSegment(x: number, y: number, count = 1): Phaser.Physics.Arcade.Sprite[] {
+    return this.levelBuilder.createGroundSegment(x, y, count);
+  }
+
+  public createPlatform(x: number, y: number): Phaser.Physics.Arcade.Sprite {
+    return this.levelBuilder.createPlatform(x, y);
+  }
+
+  public createBridge(x: number, y: number, width: number): Phaser.Physics.Arcade.Sprite[] {
+    return this.levelBuilder.createBridge(x, y, width);
+  }
+
+  public createCarrot(x: number, y: number, isGold = false): Carrot {
+    return this.levelBuilder.createCarrot(x, y, isGold);
+  }
+
+  public createBox(x: number, y: number): BreakableBox {
+    return this.levelBuilder.createBox(x, y);
+  }
+
+  public createEnemy(type: EnemyType, x: number, y: number): Enemy {
+    return this.levelBuilder.createEnemy(type, x, y);
+  }
+
+  public createProp(type: PropType, x: number, y: number, scale?: number): Phaser.GameObjects.Image {
+    return this.levelBuilder.createProp(type, x, y, scale);
+  }
+
+  public createGoal(x: number, y: number): GoalShrine {
+    this.goalShrine = this.levelBuilder.createGoal(x, y);
+    return this.goalShrine;
+  }
+
+  /**
+   * Construye el nivel a partir de la configuración o usando métodos directos
+   */
   private buildLevel(config: LevelConfig): void {
-    // 1. Scenery Props (All firmly grounded at prop.y with origin 0.5, 1)
-    config.props.forEach((prop) => {
-      let textureKey = 'rich_bush';
-      let depth = 1;
-      let scale = prop.scale ?? 1;
+    // 1. Elementos escénicos / Props
+    config.props.forEach((p) => this.createProp(p.type, p.x, p.y, p.scale));
 
-      switch (prop.type) {
-        case 'tree':
-          textureKey = 'rich_tree';
-          depth = -4;
-          scale = 0.85;
-          break;
-        case 'tree_alt':
-          textureKey = 'rich_tree_alt';
-          depth = -4;
-          scale = 0.85;
-          break;
-        case 'barn':
-          textureKey = 'rich_barn';
-          depth = -5;
-          scale = 0.95;
-          break;
-        case 'windmill':
-          textureKey = 'rich_windmill';
-          depth = -5;
-          scale = 0.95;
-          break;
-        case 'sign':
-          textureKey = 'rich_sign';
-          depth = 2;
-          scale = 0.8;
-          break;
-        case 'fence':
-          textureKey = 'rich_fence';
-          depth = 1;
-          scale = 0.85;
-          break;
-        case 'fence_white':
-          textureKey = 'rich_fence_white';
-          depth = 1;
-          scale = 0.95;
-          break;
-        case 'lantern':
-          textureKey = 'rich_lantern';
-          depth = 2;
-          scale = 0.85;
-          break;
-        case 'bush':
-          textureKey = 'rich_bush';
-          depth = 2;
-          scale = 0.9;
-          break;
-        case 'bush_large':
-          textureKey = 'rich_bush_large';
-          depth = 2;
-          scale = 0.85;
-          break;
-        case 'rock':
-          textureKey = 'rich_rock';
-          depth = 1;
-          scale = 0.85;
-          break;
-        case 'haystack':
-          textureKey = 'rich_haystack';
-          depth = 1;
-          scale = 0.85;
-          break;
-        case 'haycart':
-          textureKey = 'rich_haycart';
-          depth = 1;
-          scale = 0.85;
-          break;
-        case 'barrel':
-          textureKey = 'rich_barrel';
-          depth = 1;
-          scale = 0.8;
-          break;
-        case 'carrot_sack':
-          textureKey = 'rich_carrot_sack';
-          depth = 1;
-          scale = 0.85;
-          break;
-        case 'sunflower':
-          textureKey = 'rich_sunflower';
-          depth = 1;
-          scale = 0.85;
-          break;
-        case 'corn':
-          textureKey = 'rich_corn';
-          depth = 1;
-          scale = 0.85;
-          break;
-        case 'tomato':
-          textureKey = 'rich_tomato';
-          depth = 1;
-          scale = 0.85;
-          break;
-        case 'pumpkin':
-          textureKey = 'rich_pumpkin';
-          depth = 1;
-          scale = 0.8;
-          break;
-        case 'strawberry':
-          textureKey = 'rich_strawberry';
-          depth = 1;
-          scale = 0.8;
-          break;
-        case 'cow':
-          textureKey = 'rich_cow';
-          depth = 1;
-          scale = 0.8;
-          break;
-        case 'hen':
-          textureKey = 'rich_hen';
-          depth = 2;
-          scale = 0.75;
-          break;
-        case 'chick':
-          textureKey = 'rich_chick';
-          depth = 2;
-          scale = 0.75;
-          break;
-      }
-
-      this.add
-        .image(prop.x, prop.y, textureKey)
-        .setOrigin(0.5, 1)
-        .setScale(scale)
-        .setDepth(depth);
+    // 2. Segmentos de suelo continuo
+    config.groundSegments.forEach((g) => {
+      const tileCount = g.width > 0 ? Math.ceil(g.width / LevelBuilder.TILE_WIDTH) : 10;
+      this.createGroundSegment(g.x, g.y, tileCount);
     });
 
-    // 2. Ground Segments (Using seamless rich_ground tiles, 265x69)
-    config.groundSegments.forEach((ground) => {
-      const tileW = 265;
-      const tileH = 69;
-      const count = Math.ceil(ground.width / tileW);
+    // 3. Plataformas flotantes
+    config.floatingPlatforms.forEach((plat) => this.createPlatform(plat.x, plat.y));
 
-      for (let c = 0; c < count; c++) {
-        const x = ground.x + c * tileW + tileW / 2;
-        const y = ground.y + tileH / 2;
+    // 4. Puentes de madera
+    config.bridges.forEach((b) => this.createBridge(b.x, b.y, b.width));
 
-        const groundTile = this.platforms.create(x, y, 'rich_ground') as Phaser.Physics.Arcade.Sprite;
-        // Snug collision body on the grass surface
-        groundTile.setSize(tileW, 40);
-        groundTile.setOffset(0, 0);
-        groundTile.refreshBody();
-        groundTile.setDepth(0);
+    // 5. Charcos y peligros de agua
+    config.waterHazards.forEach((w) => this.levelBuilder.createWaterHazard(w.x, w.y, w.width));
 
-        // Fill deep soil below if needed
-        const remainingDepth = ground.height - tileH;
-        if (remainingDepth > 0) {
-          const dirtFill = this.add.rectangle(x, y + tileH / 2 + remainingDepth / 2, tileW, remainingDepth, 0x4E342E);
-          dirtFill.setDepth(0);
-        }
-      }
-    });
+    // 6. Cajas rompibles
+    config.boxes.forEach((box) => this.createBox(box.x, box.y));
 
-    // 3. Floating Platforms (Using rich_platform floating islands, 185x79)
-    config.floatingPlatforms.forEach((plat) => {
-      const p = this.platforms.create(plat.x + 92, plat.y + 40, 'rich_platform') as Phaser.Physics.Arcade.Sprite;
-      p.setSize(175, 24);
-      p.setOffset(5, 2);
-      p.refreshBody();
-      p.setDepth(0);
-    });
+    // 7. Zanahorias coleccionables
+    config.carrots.forEach((c) => this.createCarrot(c.x, c.y, c.isGold));
 
-    // 4. Wooden Bridges
-    config.bridges.forEach((bridge) => {
-      const count = Math.ceil(bridge.width / 32);
-      for (let i = 0; i < count; i++) {
-        const b = this.platforms.create(bridge.x + i * 32 + 16, bridge.y + 6, 'tile_bridge') as Phaser.Physics.Arcade.Sprite;
-        b.refreshBody();
-        b.setDepth(0);
-      }
-    });
+    // 8. Enemigos
+    config.enemies.forEach((e) => this.createEnemy(e.type, e.x, e.y));
 
-    // 5. Water Hazards (Water pond with water lilies & cattails from assets.png)
-    config.waterHazards.forEach((hazard) => {
-      const pond = this.add.image(hazard.x + hazard.width / 2, hazard.y - 12, 'rich_water_pond');
-      pond.setOrigin(0.5, 0.5);
-      pond.setDepth(0);
-      this.tweens.add({
-        targets: pond,
-        scaleY: 0.97,
-        duration: 1500,
-        yoyo: true,
-        repeat: -1,
-        ease: 'Sine.easeInOut',
-      });
-    });
-
-    // 6. Breakable Boxes
-    config.boxes.forEach((box) => {
-      const b = new BreakableBox(this, box.x, box.y, this.particles);
-      this.boxes.add(b);
-    });
-
-    // 7. Collectible Carrots
-    config.carrots.forEach((c) => {
-      const carrot = new Carrot(this, c.x, c.y, !!c.isGold, this.particles);
-      this.carrots.push(carrot);
-    });
-
-    // 8. Enemies
-    config.enemies.forEach((enemyCfg) => {
-      let enemy: Enemy;
-      if (enemyCfg.type === 'ladybug') {
-        enemy = new Ladybug(this, enemyCfg.x, enemyCfg.y, this.particles);
-      } else if (enemyCfg.type === 'caterpillar') {
-        enemy = new Caterpillar(this, enemyCfg.x, enemyCfg.y, this.particles);
-      } else if (enemyCfg.type === 'snail') {
-        enemy = new Snail(this, enemyCfg.x, enemyCfg.y, this.particles);
-      } else {
-        enemy = new Beetle(this, enemyCfg.x, enemyCfg.y, this.particles);
-      }
-      this.enemies.push(enemy);
-    });
-
-    // 9. Goal Shrine (optional)
+    // 9. Meta final
     if (config.goal) {
-      this.goalShrine = new GoalShrine(this, config.goal.x, config.goal.y, this.particles);
+      this.createGoal(config.goal.x, config.goal.y);
     }
   }
 
@@ -329,7 +214,7 @@ export class GameScene extends Phaser.Scene {
       this.boxes,
       (playerObj, boxObj) => {
         const player = playerObj as Player;
-        const box = boxObj as BreakableBox;
+        const box = boxObj as unknown as BreakableBox;
         const pBody = player.body as Phaser.Physics.Arcade.Body;
 
         // Break if stomping from above
@@ -390,8 +275,13 @@ export class GameScene extends Phaser.Scene {
 
   private setupCamera(config: LevelConfig): void {
     const cam = this.cameras.main;
-    cam.setBounds(0, 0, config.width, config.height);
+    cam.setBounds(0, 0, config.width, Math.max(config.height, this.scale.height));
     cam.startFollow(this.player, true, 0.08, 0.08, 0, 40);
+
+    this.scale.on('resize', (gameSize: Phaser.Structs.Size) => {
+      cam.setBounds(0, 0, config.width, Math.max(config.height, gameSize.height));
+      this.updateBackgroundSize();
+    });
   }
 
   public update(time: number, delta: number): void {
@@ -404,6 +294,16 @@ export class GameScene extends Phaser.Scene {
     // Slowly scroll clouds across sky
     if (this.bgClouds) {
       this.bgClouds.tilePositionX += 0.2;
+    }
+
+    // Parallax suave del fondo (más lento: 0.35x)
+    if (this.bgTile) {
+      this.bgTile.tilePositionX = this.cameras.main.scrollX * 0.35;
+    }
+
+    // Parallax del frente (más rápido: 1.25x para efecto de cercanía en primer plano)
+    if (this.fgTile) {
+      this.fgTile.tilePositionX = (this.cameras.main.scrollX * 1.25) / this.FG_SCALE;
     }
 
     // Update player

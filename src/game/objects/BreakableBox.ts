@@ -5,7 +5,7 @@ import { useGameStore } from '../../store/gameStore';
 
 export class BreakableBox extends Phaser.Physics.Arcade.Sprite {
   private particles: ParticleManager;
-  private isDestroyed = false;
+  private _isDestroyed = false;
 
   constructor(scene: Phaser.Scene, x: number, y: number, particles: ParticleManager) {
     super(scene, x, y, 'rich_box');
@@ -18,8 +18,8 @@ export class BreakableBox extends Phaser.Physics.Arcade.Sprite {
   }
 
   public break(): void {
-    if (this.isDestroyed) return;
-    this.isDestroyed = true;
+    if (this._isDestroyed) return;
+    this._isDestroyed = true;
 
     audioManager.playBoxBreak();
     this.particles.emitWoodSplinters(this.x, this.y);
