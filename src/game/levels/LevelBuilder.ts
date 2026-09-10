@@ -1,14 +1,14 @@
-import Phaser from 'phaser';
-import { Carrot } from '../objects/Carrot';
-import { BreakableBox } from '../objects/BreakableBox';
-import { GoalShrine } from '../objects/GoalShrine';
-import { Enemy } from '../entities/Enemy';
-import { Ladybug } from '../entities/Ladybug';
-import { Caterpillar } from '../entities/Caterpillar';
-import { Snail } from '../entities/Snail';
-import { Beetle } from '../entities/Beetle';
-import { ParticleManager } from '../systems/ParticleManager';
-import { EnemyType, PropType } from './levelData';
+import Phaser from "phaser";
+import { Carrot } from "../objects/Carrot";
+import { BreakableBox } from "../objects/BreakableBox";
+import { GoalShrine } from "../objects/GoalShrine";
+import { Enemy } from "../entities/Enemy";
+import { Ladybug } from "../entities/Ladybug";
+import { Caterpillar } from "../entities/Caterpillar";
+import { Snail } from "../entities/Snail";
+import { Beetle } from "../entities/Beetle";
+import { ParticleManager } from "../systems/ParticleManager";
+import { EnemyType, PropType } from "./levelData";
 
 export interface LevelBuilderContext {
   scene: Phaser.Scene;
@@ -21,7 +21,7 @@ export interface LevelBuilderContext {
 
 /**
  * LevelBuilder — Implementación del patrón Builder / Factory para la construcción de niveles.
- * 
+ *
  * Principios SOLID aplicados:
  * - Single Responsibility (SRP): Encapsula las dimensiones, hitboxes, offsets y capas de profundidad de cada entidad.
  * - Open/Closed (OCP): Permite agregar nuevos tipos de plataformas o props sin modificar las escenas.
@@ -31,7 +31,7 @@ export class LevelBuilder {
   public static readonly TILE_WIDTH = 245;
   public static readonly TILE_HEIGHT = 95;
   public static readonly TILE_Y_OFFSET = -10;
-  public static readonly HITBOX_WIDTH = 245;
+  public static readonly HITBOX_WIDTH = 225;
   public static readonly HITBOX_HEIGHT = 65;
   public static readonly HITBOX_OFFSET_X = 10;
   public static readonly HITBOX_OFFSET_Y = 20;
@@ -40,27 +40,40 @@ export class LevelBuilder {
 
   /**
    * Crea uno o varios bloques de suelo consecutivos en la posición indicada.
-   * 
+   *
    * @param x Posición X donde comienza el bloque (borde izquierdo).
    * @param y Altura del suelo (superficie donde pisa el personaje).
    * @param count Cantidad de bloques consecutivos (por defecto 1).
    * @returns Array con los sprites creados.
    */
-  public createGroundSegment(x: number, y: number, count = 1): Phaser.Physics.Arcade.Sprite[] {
+  public createGroundSegment(
+    x: number,
+    y: number,
+    count = 1,
+  ): Phaser.Physics.Arcade.Sprite[] {
     const createdTiles: Phaser.Physics.Arcade.Sprite[] = [];
     const { platforms } = this.context;
 
     for (let i = 0; i < count; i++) {
-      const tileX = x + (i * LevelBuilder.TILE_WIDTH) + (LevelBuilder.TILE_WIDTH / 2);
-      const tileY = y + (LevelBuilder.TILE_HEIGHT / 2) + LevelBuilder.TILE_Y_OFFSET;
+      const tileX =
+        x + i * LevelBuilder.TILE_WIDTH + LevelBuilder.TILE_WIDTH / 2;
+      const tileY =
+        y + LevelBuilder.TILE_HEIGHT / 2 + LevelBuilder.TILE_Y_OFFSET;
 
-      const tile = platforms.create(tileX, tileY, 'ground_tile') as Phaser.Physics.Arcade.Sprite;
+      const tile = platforms.create(
+        tileX,
+        tileY,
+        "ground_tile",
+      ) as Phaser.Physics.Arcade.Sprite;
       tile.setDepth(0);
 
       // Calibración de la hitbox física sin deformar el sprite visual
       const staticBody = tile.body as Phaser.Physics.Arcade.StaticBody;
-      staticBody.setSize(LevelBuilder.HITBOX_WIDTH, LevelBuilder.HITBOX_HEIGHT, false);
-      staticBody.setOffset(LevelBuilder.HITBOX_OFFSET_X, LevelBuilder.HITBOX_OFFSET_Y);
+      staticBody.width = LevelBuilder.HITBOX_WIDTH;
+      staticBody.height = LevelBuilder.HITBOX_HEIGHT;
+      staticBody.offset.set(LevelBuilder.HITBOX_OFFSET_X, LevelBuilder.HITBOX_OFFSET_Y);
+      staticBody.position.x = tile.x - tile.displayOriginX + LevelBuilder.HITBOX_OFFSET_X;
+      staticBody.position.y = tile.y - tile.displayOriginY + LevelBuilder.HITBOX_OFFSET_Y;
 
       createdTiles.push(tile);
     }
@@ -70,18 +83,25 @@ export class LevelBuilder {
 
   /**
    * Crea una plataforma flotante tipo isla.
-   * 
+   *
    * @param x Posición X de la plataforma.
    * @param y Posición Y de la plataforma.
    * @returns El sprite de la plataforma con su colisión configurada.
    */
   public createPlatform(x: number, y: number): Phaser.Physics.Arcade.Sprite {
     const { platforms } = this.context;
-    const platform = platforms.create(x + 92, y + 40, 'rich_platform') as Phaser.Physics.Arcade.Sprite;
+    const platform = platforms.create(
+      x + 92,
+      y + 40,
+      "rich_platform",
+    ) as Phaser.Physics.Arcade.Sprite;
 
-    platform.setSize(175, 24);
-    platform.setOffset(5, 2);
-    platform.refreshBody();
+    const staticBody = platform.body as Phaser.Physics.Arcade.StaticBody;
+    staticBody.width = 140;
+    staticBody.height = 30;
+    staticBody.offset.set(6, 45);
+    staticBody.position.x = platform.x - platform.displayOriginX + 6;
+    staticBody.position.y = platform.y - platform.displayOriginY + 45;
     platform.setDepth(0);
 
     return platform;
@@ -89,18 +109,26 @@ export class LevelBuilder {
 
   /**
    * Crea una fila de tablones de puente de madera.
-   * 
+   *
    * @param x Posición X inicial del puente.
    * @param y Posición Y del puente.
    * @param width Ancho total del puente.
    */
-  public createBridge(x: number, y: number, width: number): Phaser.Physics.Arcade.Sprite[] {
+  public createBridge(
+    x: number,
+    y: number,
+    width: number,
+  ): Phaser.Physics.Arcade.Sprite[] {
     const { platforms } = this.context;
     const count = Math.ceil(width / 32);
     const planks: Phaser.Physics.Arcade.Sprite[] = [];
 
     for (let i = 0; i < count; i++) {
-      const plank = platforms.create(x + i * 32 + 16, y + 6, 'tile_bridge') as Phaser.Physics.Arcade.Sprite;
+      const plank = platforms.create(
+        x + i * 32 + 16,
+        y + 6,
+        "tile_bridge",
+      ) as Phaser.Physics.Arcade.Sprite;
       plank.refreshBody();
       plank.setDepth(0);
       planks.push(plank);
@@ -111,7 +139,7 @@ export class LevelBuilder {
 
   /**
    * Crea una zanahoria coleccionable con su animación de flotado y partículas.
-   * 
+   *
    * @param x Posición X de la zanahoria.
    * @param y Posición Y de la zanahoria.
    * @param isGold Si es una zanahoria dorada especial (vale más puntos).
@@ -125,7 +153,7 @@ export class LevelBuilder {
 
   /**
    * Crea una caja rompible de madera con efecto de partículas al destruirse.
-   * 
+   *
    * @param x Posición X de la caja.
    * @param y Posición Y de la caja.
    */
@@ -138,7 +166,7 @@ export class LevelBuilder {
 
   /**
    * Crea un enemigo según su tipo ('ladybug' | 'caterpillar' | 'snail' | 'beetle').
-   * 
+   *
    * @param type Tipo de enemigo.
    * @param x Posición X inicial.
    * @param y Posición Y inicial.
@@ -148,16 +176,16 @@ export class LevelBuilder {
     let enemy: Enemy;
 
     switch (type) {
-      case 'ladybug':
+      case "ladybug":
         enemy = new Ladybug(scene, x, y, particles);
         break;
-      case 'caterpillar':
+      case "caterpillar":
         enemy = new Caterpillar(scene, x, y, particles);
         break;
-      case 'snail':
+      case "snail":
         enemy = new Snail(scene, x, y, particles);
         break;
-      case 'beetle':
+      case "beetle":
       default:
         enemy = new Beetle(scene, x, y, particles);
         break;
@@ -169,131 +197,136 @@ export class LevelBuilder {
 
   /**
    * Crea un elemento decorativo del escenario (árboles, flores, graneros, molinos, vallas).
-   * 
+   *
    * @param type Tipo de elemento decorativo.
    * @param x Posición X.
    * @param y Posición Y (alineado en la base con origin 0.5, 1).
    * @param customScale Escala opcional.
    */
-  public createProp(type: PropType, x: number, y: number, customScale?: number): Phaser.GameObjects.Image {
+  public createProp(
+    type: PropType,
+    x: number,
+    y: number,
+    customScale?: number,
+  ): Phaser.GameObjects.Image {
     const { scene } = this.context;
-    let textureKey = 'rich_bush';
+    let textureKey = "rich_bush";
     let depth = 1;
     let scale = customScale ?? 1;
 
     switch (type) {
-      case 'tree':
-        textureKey = 'rich_tree';
+      case "tree":
+        textureKey = "rich_tree";
         depth = -4;
         scale = customScale ?? 0.85;
         break;
-      case 'tree_alt':
-        textureKey = 'rich_tree_alt';
+      case "tree_alt":
+        textureKey = "rich_tree_alt";
         depth = -4;
         scale = customScale ?? 0.85;
         break;
-      case 'barn':
-        textureKey = 'rich_barn';
+      case "barn":
+        textureKey = "rich_barn";
         depth = -5;
         scale = customScale ?? 0.95;
         break;
-      case 'windmill':
-        textureKey = 'rich_windmill';
+      case "windmill":
+        textureKey = "rich_windmill";
         depth = -5;
         scale = customScale ?? 0.95;
         break;
-      case 'sign':
-        textureKey = 'rich_sign';
+      case "sign":
+        textureKey = "rich_sign";
         depth = 2;
         scale = customScale ?? 0.8;
         break;
-      case 'fence':
-        textureKey = 'rich_fence';
+      case "fence":
+        textureKey = "rich_fence";
         depth = 1;
         scale = customScale ?? 0.85;
         break;
-      case 'fence_white':
-        textureKey = 'rich_fence_white';
+      case "fence_white":
+        textureKey = "rich_fence_white";
         depth = 1;
         scale = customScale ?? 0.95;
         break;
-      case 'lantern':
-        textureKey = 'rich_lantern';
+      case "lantern":
+        textureKey = "rich_lantern";
         depth = 2;
         scale = customScale ?? 0.85;
         break;
-      case 'bush':
-        textureKey = 'rich_bush';
+      case "bush":
+        textureKey = "rich_bush";
         depth = 2;
         scale = customScale ?? 0.9;
         break;
-      case 'bush_large':
-        textureKey = 'rich_bush_large';
+      case "bush_large":
+        textureKey = "rich_bush_large";
         depth = 2;
         scale = customScale ?? 0.85;
         break;
-      case 'rock':
-        textureKey = 'rich_rock';
+      case "rock":
+        textureKey = "rich_rock";
         depth = 1;
         scale = customScale ?? 0.85;
         break;
-      case 'haystack':
-        textureKey = 'rich_haystack';
+      case "haystack":
+        textureKey = "rich_haystack";
         depth = 1;
         scale = customScale ?? 0.85;
         break;
-      case 'haycart':
-        textureKey = 'rich_haycart';
+      case "haycart":
+        textureKey = "rich_haycart";
         depth = 1;
         scale = customScale ?? 0.85;
         break;
-      case 'barrel':
-        textureKey = 'rich_barrel';
+      case "barrel":
+        textureKey = "rich_barrel";
         depth = 1;
         scale = customScale ?? 0.8;
         break;
-      case 'carrot_sack':
-        textureKey = 'rich_carrot_sack';
+      case "carrot_sack":
+        textureKey = "rich_carrot_sack";
         depth = 1;
         scale = customScale ?? 0.85;
         break;
-      case 'sunflower':
-        textureKey = 'rich_sunflower';
+      case "sunflower":
+        textureKey = "rich_sunflower";
         depth = 1;
         scale = customScale ?? 0.85;
         break;
-      case 'corn':
-        textureKey = 'rich_corn';
+      case "corn":
+        textureKey = "rich_corn";
         depth = 1;
         scale = customScale ?? 0.85;
         break;
-      case 'tomato':
-        textureKey = 'rich_tomato';
+      case "tomato":
+        textureKey = "rich_tomato";
         depth = 1;
         scale = customScale ?? 0.85;
         break;
-      case 'pumpkin':
-        textureKey = 'rich_pumpkin';
+      case "pumpkin":
+        textureKey = "rich_pumpkin";
         depth = 1;
         scale = customScale ?? 0.8;
         break;
-      case 'strawberry':
-        textureKey = 'rich_strawberry';
+      case "strawberry":
+        textureKey = "rich_strawberry";
         depth = 1;
         scale = customScale ?? 0.8;
         break;
-      case 'cow':
-        textureKey = 'rich_cow';
+      case "cow":
+        textureKey = "rich_cow";
         depth = 1;
         scale = customScale ?? 0.8;
         break;
-      case 'hen':
-        textureKey = 'rich_hen';
+      case "hen":
+        textureKey = "rich_hen";
         depth = 2;
         scale = customScale ?? 0.75;
         break;
-      case 'chick':
-        textureKey = 'rich_chick';
+      case "chick":
+        textureKey = "rich_chick";
         depth = 2;
         scale = customScale ?? 0.75;
         break;
@@ -308,14 +341,18 @@ export class LevelBuilder {
 
   /**
    * Crea un charco de agua animado.
-   * 
+   *
    * @param x Posición X.
    * @param y Posición Y.
    * @param width Ancho del charco.
    */
-  public createWaterHazard(x: number, y: number, width: number): Phaser.GameObjects.Image {
+  public createWaterHazard(
+    x: number,
+    y: number,
+    width: number,
+  ): Phaser.GameObjects.Image {
     const { scene } = this.context;
-    const pond = scene.add.image(x + width / 2, y - 12, 'rich_water_pond');
+    const pond = scene.add.image(x + width / 2, y - 12, "rich_water_pond");
     pond.setOrigin(0.5, 0.5);
     pond.setDepth(0);
 
@@ -325,7 +362,7 @@ export class LevelBuilder {
       duration: 1500,
       yoyo: true,
       repeat: -1,
-      ease: 'Sine.easeInOut',
+      ease: "Sine.easeInOut",
     });
 
     return pond;
@@ -333,7 +370,7 @@ export class LevelBuilder {
 
   /**
    * Crea el santuario / altar de meta del nivel.
-   * 
+   *
    * @param x Posición X.
    * @param y Posición Y.
    */

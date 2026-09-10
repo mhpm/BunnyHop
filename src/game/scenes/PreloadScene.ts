@@ -33,6 +33,9 @@ export class PreloadScene extends Phaser.Scene {
     // 4. Load Parallax Background & Foreground
     this.load.image('game_background', '/assets/background/background.png');
     this.load.image('game_foreground', '/assets/background/background_front.png?v=2');
+
+    // 5. Load Goal Shrine
+    this.load.image('rich_goal', '/assets/environment/goal.png');
   }
 
   public create(): void {

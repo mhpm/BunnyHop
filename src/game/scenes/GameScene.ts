@@ -1,13 +1,18 @@
-import Phaser from 'phaser';
-import { Player } from '../entities/Player';
-import { Enemy } from '../entities/Enemy';
-import { Carrot } from '../objects/Carrot';
-import { BreakableBox } from '../objects/BreakableBox';
-import { GoalShrine } from '../objects/GoalShrine';
-import { ParticleManager } from '../systems/ParticleManager';
-import { LEVEL_1_CONFIG, LevelConfig, PropType, EnemyType } from '../levels/levelData';
-import { LevelBuilder } from '../levels/LevelBuilder';
-import { useGameStore } from '../../store/gameStore';
+import Phaser from "phaser";
+import { Player } from "../entities/Player";
+import { Enemy } from "../entities/Enemy";
+import { Carrot } from "../objects/Carrot";
+import { BreakableBox } from "../objects/BreakableBox";
+import { GoalShrine } from "../objects/GoalShrine";
+import { ParticleManager } from "../systems/ParticleManager";
+import {
+  LEVEL_1_CONFIG,
+  LevelConfig,
+  PropType,
+  EnemyType,
+} from "../levels/levelData";
+import { LevelBuilder } from "../levels/LevelBuilder";
+import { useGameStore } from "../../store/gameStore";
 
 export class GameScene extends Phaser.Scene {
   public player!: Player;
@@ -24,11 +29,11 @@ export class GameScene extends Phaser.Scene {
   private bgClouds!: Phaser.GameObjects.TileSprite;
   private bgTile!: Phaser.GameObjects.TileSprite;
   private fgTile!: Phaser.GameObjects.TileSprite;
-  private readonly FG_TEXTURE_HEIGHT = 370;
+  private readonly FG_TEXTURE_HEIGHT = 175;
   private readonly FG_SCALE = 0.35;
 
   constructor() {
-    super({ key: 'GameScene' });
+    super({ key: "GameScene" });
   }
 
   public create(): void {
@@ -38,7 +43,12 @@ export class GameScene extends Phaser.Scene {
     useGameStore.getState().resetLevelStats(config.carrots.length);
 
     // Set world physics bounds
-    this.physics.world.setBounds(0, 0, config.width, Math.max(config.height + 100, 1400));
+    this.physics.world.setBounds(
+      0,
+      0,
+      config.width,
+      Math.max(config.height + 100, 1400),
+    );
 
     // Initialize particle manager
     this.particles = new ParticleManager(this);
@@ -66,7 +76,12 @@ export class GameScene extends Phaser.Scene {
     this.buildLevel(config);
 
     // Spawn Player
-    this.player = new Player(this, config.spawn.x, config.spawn.y, this.particles);
+    this.player = new Player(
+      this,
+      config.spawn.x,
+      config.spawn.y,
+      this.particles,
+    );
 
     // Collisions and Overlaps
     this.setupCollisions();
@@ -75,12 +90,12 @@ export class GameScene extends Phaser.Scene {
     this.setupCamera(config);
 
     // Keyboard shortcuts (e.g. ESC for pause)
-    this.input.keyboard?.on('keydown-ESC', () => {
+    this.input.keyboard?.on("keydown-ESC", () => {
       const state = useGameStore.getState().gameState;
-      if (state === 'PLAYING') {
-        useGameStore.getState().setGameState('PAUSED');
-      } else if (state === 'PAUSED') {
-        useGameStore.getState().setGameState('PLAYING');
+      if (state === "PLAYING") {
+        useGameStore.getState().setGameState("PAUSED");
+      } else if (state === "PAUSED") {
+        useGameStore.getState().setGameState("PLAYING");
       }
     });
   }
@@ -90,14 +105,16 @@ export class GameScene extends Phaser.Scene {
     const viewH = this.scale.height;
 
     // 1. Background (fondo lejano detrás de todo)
-    this.bgTile = this.add.tileSprite(0, 0, viewW, viewH, 'game_background')
+    this.bgTile = this.add
+      .tileSprite(0, 0, viewW, viewH, "game_background")
       .setOrigin(0, 0)
       .setScrollFactor(0)
       .setDepth(-40);
 
     // 2. Foreground (frente en primer plano: abajo de la pantalla y más pequeño)
     const fgHeight = this.FG_TEXTURE_HEIGHT * this.FG_SCALE;
-    this.fgTile = this.add.tileSprite(0, viewH, viewW, fgHeight, 'game_foreground')
+    this.fgTile = this.add
+      .tileSprite(0, viewH, viewW, fgHeight, "game_foreground")
       .setOrigin(0, 1)
       .setScrollFactor(0)
       .setDepth(100);
@@ -119,7 +136,7 @@ export class GameScene extends Phaser.Scene {
     // Foreground del frente (anclado abajo de la pantalla, pequeño y sutil)
     if (this.fgTile) {
       const fgHeight = this.FG_TEXTURE_HEIGHT * this.FG_SCALE;
-      this.fgTile.setPosition(0, viewH);
+      this.fgTile.setPosition(0, viewH + 3);
       this.fgTile.setSize(viewW, fgHeight);
       this.fgTile.setTileScale(this.FG_SCALE, this.FG_SCALE);
       this.fgTile.tilePositionY = 0;
@@ -129,7 +146,11 @@ export class GameScene extends Phaser.Scene {
   /**
    * Métodos declarativos de construcción de nivel (disponibles para diseño a medida)
    */
-  public createGroundSegment(x: number, y: number, count = 1): Phaser.Physics.Arcade.Sprite[] {
+  public createGroundSegment(
+    x: number,
+    y: number,
+    count = 1,
+  ): Phaser.Physics.Arcade.Sprite[] {
     return this.levelBuilder.createGroundSegment(x, y, count);
   }
 
@@ -137,7 +158,11 @@ export class GameScene extends Phaser.Scene {
     return this.levelBuilder.createPlatform(x, y);
   }
 
-  public createBridge(x: number, y: number, width: number): Phaser.Physics.Arcade.Sprite[] {
+  public createBridge(
+    x: number,
+    y: number,
+    width: number,
+  ): Phaser.Physics.Arcade.Sprite[] {
     return this.levelBuilder.createBridge(x, y, width);
   }
 
@@ -153,7 +178,12 @@ export class GameScene extends Phaser.Scene {
     return this.levelBuilder.createEnemy(type, x, y);
   }
 
-  public createProp(type: PropType, x: number, y: number, scale?: number): Phaser.GameObjects.Image {
+  public createProp(
+    type: PropType,
+    x: number,
+    y: number,
+    scale?: number,
+  ): Phaser.GameObjects.Image {
     return this.levelBuilder.createProp(type, x, y, scale);
   }
 
@@ -171,18 +201,23 @@ export class GameScene extends Phaser.Scene {
 
     // 2. Segmentos de suelo continuo
     config.groundSegments.forEach((g) => {
-      const tileCount = g.width > 0 ? Math.ceil(g.width / LevelBuilder.TILE_WIDTH) : 10;
+      const tileCount =
+        g.width > 0 ? Math.ceil(g.width / LevelBuilder.TILE_WIDTH) : 10;
       this.createGroundSegment(g.x, g.y, tileCount);
     });
 
     // 3. Plataformas flotantes
-    config.floatingPlatforms.forEach((plat) => this.createPlatform(plat.x, plat.y));
+    config.floatingPlatforms.forEach((plat) =>
+      this.createPlatform(plat.x, plat.y),
+    );
 
     // 4. Puentes de madera
     config.bridges.forEach((b) => this.createBridge(b.x, b.y, b.width));
 
     // 5. Charcos y peligros de agua
-    config.waterHazards.forEach((w) => this.levelBuilder.createWaterHazard(w.x, w.y, w.width));
+    config.waterHazards.forEach((w) =>
+      this.levelBuilder.createWaterHazard(w.x, w.y, w.width),
+    );
 
     // 6. Cajas rompibles
     config.boxes.forEach((box) => this.createBox(box.x, box.y));
@@ -224,7 +259,7 @@ export class GameScene extends Phaser.Scene {
         }
       },
       undefined,
-      this
+      this,
     );
 
     // Player vs Carrots
@@ -275,11 +310,21 @@ export class GameScene extends Phaser.Scene {
 
   private setupCamera(config: LevelConfig): void {
     const cam = this.cameras.main;
-    cam.setBounds(0, 0, config.width, Math.max(config.height, this.scale.height));
+    cam.setBounds(
+      0,
+      0,
+      config.width,
+      Math.max(config.height, this.scale.height),
+    );
     cam.startFollow(this.player, true, 0.08, 0.08, 0, 40);
 
-    this.scale.on('resize', (gameSize: Phaser.Structs.Size) => {
-      cam.setBounds(0, 0, config.width, Math.max(config.height, gameSize.height));
+    this.scale.on("resize", (gameSize: Phaser.Structs.Size) => {
+      cam.setBounds(
+        0,
+        0,
+        config.width,
+        Math.max(config.height, gameSize.height),
+      );
       this.updateBackgroundSize();
     });
   }
@@ -287,7 +332,7 @@ export class GameScene extends Phaser.Scene {
   public update(time: number, delta: number): void {
     const gameState = useGameStore.getState().gameState;
 
-    if (gameState === 'PAUSED') {
+    if (gameState === "PAUSED") {
       return;
     }
 
@@ -303,7 +348,8 @@ export class GameScene extends Phaser.Scene {
 
     // Parallax del frente (más rápido: 1.25x para efecto de cercanía en primer plano)
     if (this.fgTile) {
-      this.fgTile.tilePositionX = (this.cameras.main.scrollX * 1.25) / this.FG_SCALE;
+      this.fgTile.tilePositionX =
+        (this.cameras.main.scrollX * 1.25) / this.FG_SCALE;
     }
 
     // Update player
@@ -311,7 +357,10 @@ export class GameScene extends Phaser.Scene {
       this.player.update(time, delta);
 
       // Pit death check
-      if (this.player.y > this.currentLevelConfig.height + 40 && !this.player.isDead) {
+      if (
+        this.player.y > this.currentLevelConfig.height + 40 &&
+        !this.player.isDead
+      ) {
         this.player.die();
       }
     }
