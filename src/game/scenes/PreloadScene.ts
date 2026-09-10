@@ -21,6 +21,11 @@ export class PreloadScene extends Phaser.Scene {
       frameWidth: 128,
       frameHeight: 175,
     });
+    // bunny jumping (1 frame 120x173)
+    this.load.spritesheet('bunny_jump', '/assets/sprites/bunny/bunny_jump.png', {
+      frameWidth: 120,
+      frameHeight: 173,
+    });
 
 
     // 2. Load Platform & Ground (incluyendo todo el catálogo de ground_elements)
@@ -60,6 +65,12 @@ export class PreloadScene extends Phaser.Scene {
       key: 'bunny_walk_anim',
       frames: this.anims.generateFrameNumbers('bunny_walk', { start: 0, end: 7 }),
       frameRate: 8,
+      repeat: -1,
+    });
+    this.anims.create({
+      key: 'bunny_jump_anim',
+      frames: this.anims.generateFrameNumbers('bunny_jump', { start: 0, end: 0 }),
+      frameRate: 1,
       repeat: -1,
     });
   }

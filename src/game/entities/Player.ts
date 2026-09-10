@@ -268,10 +268,15 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   private updateAnimation(isGrounded: boolean, vx: number, _vy: number): void {
     if (!this.body) return;
 
-    if (isGrounded && Math.abs(vx) > 0) {
+    if (!isGrounded) {
+      this.play('bunny_jump_anim', true);
+      this.setOffset(36, 53);
+    } else if (Math.abs(vx) > 0) {
       this.play('bunny_walk_anim', true);
+      this.setOffset(40, 55);
     } else {
       this.play('bunny_idle_anim', true);
+      this.setOffset(40, 55);
     }
   }
 }
