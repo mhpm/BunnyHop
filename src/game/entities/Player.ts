@@ -1,7 +1,7 @@
-import Phaser from 'phaser';
-import { audioManager } from '../systems/AudioManager';
-import { ParticleManager } from '../systems/ParticleManager';
-import { useGameStore } from '../../store/gameStore';
+import Phaser from "phaser";
+import { audioManager } from "../systems/AudioManager";
+import { ParticleManager } from "../systems/ParticleManager";
+import { useGameStore } from "../../store/gameStore";
 
 export class Player extends Phaser.Physics.Arcade.Sprite {
   private particles: ParticleManager;
@@ -10,6 +10,8 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
 
   // Physics constants
   private readonly moveSpeed = 230;
+  private readonly runSpeedMultiplier = 1.8; // 20% más rápido al correr
+  private readonly runThresholdTime = 2000; // 2 segundos manteniendo la dirección para correr
   private readonly jumpForce = 510;
   private readonly bounceForce = 410;
 
@@ -24,6 +26,12 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   private wasTouchJump = false;
   private hasCutJump = false;
 
+  // Running & Sprinting
+  public isRunning = false;
+  private moveHoldTimer = 0;
+  private currentMoveDir: "left" | "right" | "none" = "none";
+  private runDustTimer = 0;
+
   // State flags
   public isHurt = false;
   public isInvulnerable = false;
@@ -36,24 +44,29 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   public touchRight = false;
   public touchJump = false;
 
-  constructor(scene: Phaser.Scene, x: number, y: number, particles: ParticleManager) {
-    super(scene, x, y, 'bunny_idle', 0);
+  constructor(
+    scene: Phaser.Scene,
+    x: number,
+    y: number,
+    particles: ParticleManager,
+  ) {
+    super(scene, x, y, "bunny_idle", 0);
     this.particles = particles;
 
     scene.add.existing(this);
     scene.physics.add.existing(this);
 
     // Scale 128x176 sprite to cute platformer proportions
-    this.setScale(0.60);
+    this.setScale(0.6);
 
     // Hitbox around Bunny's body and feet (bottom aligned at y=176)
     this.setSize(60, 120);
-    this.setOffset(40,55); // ajuste el hitbox
+    this.setOffset(40, 55); // ajuste el hitbox
     this.setCollideWorldBounds(true);
     this.setBounce(0);
 
     this.initControls();
-    this.play('bunny_idle_anim');
+    this.play("bunny_idle_anim");
   }
 
   private initControls(): void {
@@ -107,7 +120,8 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     const jumpPressed =
       (this.cursors?.up && Phaser.Input.Keyboard.JustDown(this.cursors.up)) ||
       (this.wasdKeys?.up && Phaser.Input.Keyboard.JustDown(this.wasdKeys.up)) ||
-      (this.wasdKeys?.space && Phaser.Input.Keyboard.JustDown(this.wasdKeys.space)) ||
+      (this.wasdKeys?.space &&
+        Phaser.Input.Keyboard.JustDown(this.wasdKeys.space)) ||
       touchJumpJustPressed;
 
     if (jumpPressed) {
@@ -118,17 +132,58 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
 
     // 3. Movement handling
     if (!this.isHurt) {
-      const left = this.cursors?.left?.isDown || this.wasdKeys?.left?.isDown || this.touchLeft;
-      const right = this.cursors?.right?.isDown || this.wasdKeys?.right?.isDown || this.touchRight;
+      const left =
+        this.cursors?.left?.isDown ||
+        this.wasdKeys?.left?.isDown ||
+        this.touchLeft;
+      const right =
+        this.cursors?.right?.isDown ||
+        this.wasdKeys?.right?.isDown ||
+        this.touchRight;
 
-      if (left) {
-        this.setVelocityX(-this.moveSpeed);
+      let desiredDir: "left" | "right" | "none" = "none";
+      if (left && !right) {
+        desiredDir = "left";
+      } else if (right && !left) {
+        desiredDir = "right";
+      }
+
+      // Track continuous hold time for the direction (sprint after 2 seconds)
+      if (desiredDir !== "none" && desiredDir === this.currentMoveDir) {
+        this.moveHoldTimer += delta;
+      } else if (desiredDir !== "none") {
+        this.currentMoveDir = desiredDir;
+        this.moveHoldTimer = 0;
+      } else {
+        this.currentMoveDir = "none";
+        this.moveHoldTimer = 0;
+      }
+
+      this.isRunning = this.moveHoldTimer >= this.runThresholdTime;
+      const currentSpeed = this.isRunning
+        ? this.moveSpeed * this.runSpeedMultiplier
+        : this.moveSpeed;
+
+      if (desiredDir === "left") {
+        this.setVelocityX(-currentSpeed);
         this.setFlipX(true);
-      } else if (right) {
-        this.setVelocityX(this.moveSpeed);
+      } else if (desiredDir === "right") {
+        this.setVelocityX(currentSpeed);
         this.setFlipX(false);
       } else {
         this.setVelocityX(0);
+      }
+
+      // Running dust effect when sprinting on the ground
+      if (this.isRunning && isGrounded && Math.abs(body.velocity.x) > 0) {
+        this.runDustTimer += delta;
+        if (this.runDustTimer >= 200) {
+          this.runDustTimer = 0;
+          const dustOffsetX = this.flipX ? 16 : -16;
+          this.particles.emitDust(this.x + dustOffsetX, this.y + 30, 2);
+        }
+      } else {
+        this.runDustTimer = 0;
       }
 
       // Execute jump if buffered and within coyote time
@@ -172,7 +227,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       scaleY: 0.68,
       duration: 110,
       yoyo: true,
-      ease: 'Quad.easeOut',
+      ease: "Quad.easeOut",
     });
   }
 
@@ -191,7 +246,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       scaleY: 0.48,
       duration: 80,
       yoyo: true,
-      ease: 'Quad.easeOut',
+      ease: "Quad.easeOut",
       onComplete: () => {
         this.isStomping = false;
       },
@@ -214,6 +269,9 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     // Knockback
     this.isHurt = true;
     this.isInvulnerable = true;
+    this.moveHoldTimer = 0;
+    this.isRunning = false;
+    this.currentMoveDir = "none";
     const knockbackDir = this.x < fromX ? -1 : 1;
     this.setVelocity(knockbackDir * 190, -280);
 
@@ -241,6 +299,9 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
 
   public die(): void {
     this.isDead = true;
+    this.moveHoldTimer = 0;
+    this.isRunning = false;
+    this.currentMoveDir = "none";
     this.setVelocity(0, -320);
     this.setCollideWorldBounds(false);
     audioManager.playGameOver();
@@ -251,15 +312,18 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       angle: 360,
       alpha: 0,
       duration: 1200,
-      ease: 'Quad.easeIn',
+      ease: "Quad.easeIn",
       onComplete: () => {
-        useGameStore.getState().setGameState('GAMEOVER');
+        useGameStore.getState().setGameState("GAMEOVER");
       },
     });
   }
 
   public celebrateVictory(): void {
     this.isVictorious = true;
+    this.moveHoldTimer = 0;
+    this.isRunning = false;
+    this.currentMoveDir = "none";
     this.setVelocity(0, -220);
     audioManager.playVictory();
 
@@ -277,13 +341,22 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     if (!this.body) return;
 
     if (!isGrounded) {
-      this.play('bunny_jump_anim', true);
+      this.anims.timeScale = 1;
+      this.play("bunny_jump_anim", true);
       this.setOffset(36, 53);
     } else if (Math.abs(vx) > 0) {
-      this.play('bunny_walk_anim', true);
-      this.setOffset(40, 55);
+      if (this.isRunning) {
+        this.anims.timeScale = 1;
+        this.play("bunny_run_anim", true);
+        this.setOffset(48, 55);
+      } else {
+        this.anims.timeScale = 1;
+        this.play("bunny_walk_anim", true);
+        this.setOffset(40, 55);
+      }
     } else {
-      this.play('bunny_idle_anim', true);
+      this.anims.timeScale = 1;
+      this.play("bunny_idle_anim", true);
       this.setOffset(40, 55);
     }
   }
