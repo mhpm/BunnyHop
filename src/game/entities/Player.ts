@@ -36,6 +36,14 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   private runInertiaDir = 1;
   private readonly maxRunInertiaTime = 480; // Ventana de inercia suave tras correr
 
+  // Double-tap sprint detection (activar velocidad al presionar dos veces)
+  private doubleTapTimer = 0;
+  private readonly doubleTapMaxDelay = 320; // Ventana máxima para doble toque (ms)
+  private lastTapDir: "left" | "right" | "none" = "none";
+  private isDoubleTapRunning = false;
+  private wasTouchLeft = false;
+  private wasTouchRight = false;
+
   // Dash & Slide
   public isDashing = false;
   private currentDashSpeed = 0;
@@ -189,6 +197,49 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         (this.wasdKeys?.down?.isDown ?? false) ||
         this.touchDash;
 
+      // Detección de pulsación inicial (flanco ascendente / just pressed)
+      const leftJustPressed =
+        (this.cursors?.left && Phaser.Input.Keyboard.JustDown(this.cursors.left)) ||
+        (this.wasdKeys?.left && Phaser.Input.Keyboard.JustDown(this.wasdKeys.left)) ||
+        (this.touchLeft && !this.wasTouchLeft);
+
+      const rightJustPressed =
+        (this.cursors?.right && Phaser.Input.Keyboard.JustDown(this.cursors.right)) ||
+        (this.wasdKeys?.right && Phaser.Input.Keyboard.JustDown(this.wasdKeys.right)) ||
+        (this.touchRight && !this.wasTouchRight);
+
+      this.wasTouchLeft = this.touchLeft;
+      this.wasTouchRight = this.touchRight;
+
+      // Temporizador de doble toque
+      if (this.doubleTapTimer > 0) {
+        this.doubleTapTimer = Math.max(0, this.doubleTapTimer - delta);
+        if (this.doubleTapTimer === 0) {
+          this.lastTapDir = "none";
+        }
+      }
+
+      // Evaluar doble toque para iniciar sprint
+      if (leftJustPressed) {
+        if (this.lastTapDir === "left" && this.doubleTapTimer > 0) {
+          this.isDoubleTapRunning = true;
+          this.doubleTapTimer = 0;
+          this.lastTapDir = "none";
+        } else {
+          this.lastTapDir = "left";
+          this.doubleTapTimer = this.doubleTapMaxDelay;
+        }
+      } else if (rightJustPressed) {
+        if (this.lastTapDir === "right" && this.doubleTapTimer > 0) {
+          this.isDoubleTapRunning = true;
+          this.doubleTapTimer = 0;
+          this.lastTapDir = "none";
+        } else {
+          this.lastTapDir = "right";
+          this.doubleTapTimer = this.doubleTapMaxDelay;
+        }
+      }
+
       // Determine desired horizontal input direction
       let desiredDir: "left" | "right" | "none" = "none";
       if (left && !right) {
@@ -201,6 +252,13 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       if (desiredDir !== "none" && desiredDir === this.currentMoveDir) {
         this.moveHoldTimer += delta;
       } else if (desiredDir !== "none") {
+        // Al cambiar de dirección sin haber hecho doble toque en esa nueva dirección, se desactiva el sprint rápido
+        if (
+          (desiredDir === "left" && !leftJustPressed) ||
+          (desiredDir === "right" && !rightJustPressed)
+        ) {
+          this.isDoubleTapRunning = false;
+        }
         this.currentMoveDir = desiredDir;
         this.moveHoldTimer = 0;
         this.runInertiaTimer = 0; // Changing direction cancels previous run inertia
@@ -214,9 +272,12 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         }
         this.currentMoveDir = "none";
         this.moveHoldTimer = 0;
+        this.isDoubleTapRunning = false;
       }
 
-      this.isRunning = this.moveHoldTimer >= this.runThresholdTime;
+      // Activar correr por doble toque O por mantener presionado 2 segundos
+      this.isRunning =
+        this.isDoubleTapRunning || this.moveHoldTimer >= this.runThresholdTime;
 
       // Update facing direction when advancing
       if (desiredDir === "left") {
@@ -437,6 +498,9 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     this.isDashing = false;
     this.currentDashSpeed = 0;
     this.currentMoveDir = "none";
+    this.isDoubleTapRunning = false;
+    this.doubleTapTimer = 0;
+    this.lastTapDir = "none";
     this.setHitboxMode("standing");
     const knockbackDir = this.x < fromX ? -1 : 1;
     this.setVelocity(knockbackDir * 190, -280);
@@ -471,6 +535,9 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     this.isDashing = false;
     this.currentDashSpeed = 0;
     this.currentMoveDir = "none";
+    this.isDoubleTapRunning = false;
+    this.doubleTapTimer = 0;
+    this.lastTapDir = "none";
     this.setHitboxMode("standing");
     this.setVelocity(0, -320);
     this.setCollideWorldBounds(false);
@@ -497,6 +564,9 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     this.isDashing = false;
     this.currentDashSpeed = 0;
     this.currentMoveDir = "none";
+    this.isDoubleTapRunning = false;
+    this.doubleTapTimer = 0;
+    this.lastTapDir = "none";
     this.setHitboxMode("standing");
     this.setVelocity(0, -220);
     audioManager.playVictory();

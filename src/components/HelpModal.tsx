@@ -23,11 +23,11 @@ export const HelpModal: React.FC<HelpModalProps> = ({ onClose }) => {
             <div className="controls-grid">
               <div className="control-item">
                 <span className="key-cap">A</span> <span className="key-cap">←</span>
-                <span>Izquierda</span>
+                <span>Izquierda (doble toque: correr)</span>
               </div>
               <div className="control-item">
                 <span className="key-cap">D</span> <span className="key-cap">→</span>
-                <span>Derecha</span>
+                <span>Derecha (doble toque: correr)</span>
               </div>
               <div className="control-item">
                 <span className="key-cap">ESPACIO</span> / <span className="key-cap">W</span>
