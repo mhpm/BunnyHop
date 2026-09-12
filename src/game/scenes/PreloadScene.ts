@@ -1,6 +1,7 @@
 import Phaser from "phaser";
 import { AssetGenerator } from "../assets/assetGenerator";
 import { GROUND_ELEMENTS_LIST } from "../config/groundElements";
+import { ENVIRONMENT_ELEMENTS_LIST } from "../config/environmentElements";
 
 export class PreloadScene extends Phaser.Scene {
   constructor() {
@@ -56,13 +57,17 @@ export class PreloadScene extends Phaser.Scene {
         frameHeight: 125,
       },
     );
+    // bunny dash shape definition (from PhysicsEditor)
+    this.load.json("bunny_dash_shape", "/assets/sprites/bunny/dash.json");
 
-    // 2. Load Platform & Ground (incluyendo todo el catálogo de ground_elements)
-    this.load.image("rich_platform", "/assets/environment/platform_float.png");
-    this.load.image("ground_tile", "/assets/environment/ground_tile.png");
-
+    // 2. Load Platform & Ground (catálogo de ground_elements)
     GROUND_ELEMENTS_LIST.forEach((el) => {
       this.load.image(el.id, `/assets/environment/ground_elements/${el.file}`);
+    });
+
+    // 2.5 Load Environment Elements (únicamente desde enviroment_elements)
+    ENVIRONMENT_ELEMENTS_LIST.forEach((el) => {
+      this.load.image(el.id, `/assets/environment/enviroment_elements/${el.file}`);
     });
 
     // 3. Load Items (Carrots)

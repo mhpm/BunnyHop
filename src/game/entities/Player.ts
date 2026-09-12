@@ -2,6 +2,11 @@ import Phaser from "phaser";
 import { audioManager } from "../systems/AudioManager";
 import { ParticleManager } from "../systems/ParticleManager";
 import { useGameStore } from "../../store/gameStore";
+import {
+  getPhysicsShapeBounds,
+  applyArcadeHitbox,
+  ShapeBounds,
+} from "../utils/physicsShapes";
 
 export class Player extends Phaser.Physics.Arcade.Sprite {
   private particles: ParticleManager;
@@ -52,18 +57,40 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   private dashDustTimer = 0;
   private currentHitbox: "standing" | "dash" = "standing";
 
+  /**
+   * Obtiene los límites calculados dinámicamente con la función utilitaria reutilizable
+   */
+  private getDashBounds(): ShapeBounds {
+    return getPhysicsShapeBounds(this.scene, "bunny_dash_shape", "bunny_dash", {
+      frameWidth: 218,
+      frameHeight: 125,
+      groundBaseline: 87.5,
+      customHeight: 52, // Altura baja ceñida al cuerpo para deslizarse bajo obstáculos
+      fallback: { minX: 72, maxX: 195, minY: 33, maxY: 119 },
+    });
+  }
+
+  private applyDashHitbox(): void {
+    const bounds = this.getDashBounds();
+    applyArcadeHitbox(this, bounds, 218, true);
+  }
+
+  public updateDashHitboxOffset(): void {
+    if (this.currentHitbox !== "dash") return;
+    const bounds = this.getDashBounds();
+    applyArcadeHitbox(this, bounds, 218, false);
+  }
+
   public setHitboxMode(mode: "standing" | "dash"): void {
-    if (this.currentHitbox === mode) return;
+    if (this.currentHitbox === mode) {
+      if (mode === "dash") {
+        this.updateDashHitboxOffset();
+      }
+      return;
+    }
 
     if (mode === "dash") {
-      // Ajuste de anclaje visual (origin) para la textura de 218x125px:
-      // Con las patas en y=118 y las texturas de pie con altura ~175px (centro 87.5px),
-      // situamos el anclaje vertical en 31/125 para que el conejo repose exactamente sobre el suelo sin flotar
-      this.setOrigin(0.5, 31 / 125);
-      const dashWidth = 140;
-      const dashHeight = 60;
-      this.setSize(dashWidth, dashHeight);
-      this.setOffset(50, 58); // Caja rectangular horizontal centrada (140x60) en contacto con el suelo
+      this.applyDashHitbox();
       this.currentHitbox = "dash";
     } else {
       // Restauramos el anclaje centrado y la caja vertical estándar (60 ancho x 120 alto)
@@ -282,8 +309,10 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       // Update facing direction when advancing
       if (desiredDir === "left") {
         this.setFlipX(true);
+        if (this.currentHitbox === "dash") this.updateDashHitboxOffset();
       } else if (desiredDir === "right") {
         this.setFlipX(false);
+        if (this.currentHitbox === "dash") this.updateDashHitboxOffset();
       }
 
       // --- DASH / CROUCH LOGIC ---

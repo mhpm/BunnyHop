@@ -1,7 +1,11 @@
 import { GroundElementId, GROUND_PRESETS } from "../config/groundElements";
+import {
+  EnvironmentElementId,
+  ENVIRONMENT_PRESETS,
+} from "../config/environmentElements";
 
-export { GROUND_PRESETS };
-export type { GroundElementId };
+export { GROUND_PRESETS, ENVIRONMENT_PRESETS };
+export type { GroundElementId, EnvironmentElementId };
 
 export interface PlatformConfig {
   x: number;
@@ -29,6 +33,24 @@ export interface GroundElementPlacement {
   scale?: number;
   flipX?: boolean;
   depth?: number;
+  hitbox?: {
+    width?: number;
+    height?: number;
+    offsetX?: number;
+    offsetY?: number;
+  };
+}
+
+export interface EnvironmentElementPlacement {
+  element: EnvironmentElementId; // Piezas del folder enviroment_elements
+  x: number;
+  y?: number; // Opcional: si no se especifica, se ancla automáticamente al nivel del suelo en X
+  offsetY?: number; // Ajuste vertical fino relativo al suelo (por defecto 0)
+  isSolid?: boolean; // Por defecto false para escenografía de entorno. True si se desea colisión sólida
+  scale?: number;
+  flipX?: boolean;
+  depth?: number;
+  alpha?: number;
   hitbox?: {
     width?: number;
     height?: number;
@@ -100,6 +122,7 @@ export interface LevelConfig {
   groundSegments: GroundSegmentConfig[];
   floatingPlatforms: PlatformConfig[];
   groundElements?: GroundElementPlacement[]; // Piezas modulares individuales sueltas combinables
+  environmentElements?: EnvironmentElementPlacement[]; // Elementos modulares de escenografía y entorno (enviroment_elements)
   waterHazards: { x: number; y: number; width: number; height: number }[];
   bridges: { x: number; y: number; width: number }[];
   props: PropConfig[];
@@ -110,247 +133,265 @@ export interface LevelConfig {
 
 export const LEVEL_1_CONFIG: LevelConfig = {
   id: "level_1_1",
-  name: "Pradera Soleada (Sunny Meadow)",
-  worldName: "Mundo 1 — Pradera",
-  width: 20800,
+  name: "Pradera del Viento y Cavernas (Windy Meadow & Dash Caverns)",
+  worldName: "Mundo 1 — Desafío de Velocidad y Deslizamiento",
+  width: 16800,
   height: 720,
-  spawn: { x: 110, y: 520 },
+  spawn: { x: 120, y: 520 },
 
   // =========================================================================
-  // 1. SEGMENTOS DE SUELO CONTINUO (Tramos de tierra firme con variantes)
+  // 1. SEGMENTOS DE SUELO CONTINUO (Tramos de tierra firme variados)
   // =========================================================================
   groundSegments: [
-    // --- SECCIÓN 1: La Pradera de los Primeros Pasos (0 a 3400) ---
-    { x: 0, y: 600, width: 950, element: "ground_104" }, // Suelo 1: Aprendizaje y arranque (4 bloques)
-    { x: 1110, y: 600, width: 715, element: "ground_100" }, // Suelo 2: Tras el 1er agujero de 160px (3 bloques)
-    { x: 2120, y: 480, width: 715, element: "ground_101" }, // Suelo 3: Meseta suave elevada (3 bloques)
-    { x: 3180, y: 600, width: 715, element: "ground_104" }, // Suelo 4: Retorno a cota baja (3 bloques)
+    // --- ZONA 1: Pradera de Iniciación y Arranque (0 a 1600) ---
+    { x: 0, y: 600, width: 1600, element: "ground_104" }, // Suelo inicial plano para acelerar y probar el dash
 
-    // --- SECCIÓN 2: Las Colinas Escalonadas y Doble Ruta (3895 a 7200) ---
-    { x: 4440, y: 460, width: 950, element: "ground_099" }, // Suelo 5: Meseta florida elevada (4 bloques)
-    { x: 5510, y: 520, width: 245, element: "ground_102" }, // Pilar Escalonado 1 (1 bloque)
-    { x: 5880, y: 460, width: 245, element: "ground_103" }, // Pilar Escalonado 2 (1 bloque)
-    { x: 6470, y: 580, width: 715, element: "ground_104" }, // Suelo 6: Llanura tras descenso aéreo (3 bloques)
+    // --- ZONA 2: Meseta Tras el Gran Cañón (1980 a 3700) ---
+    // (Foso de 380px entre 1600 y 1980 -> ¡Requiere sprint a máxima velocidad para cruzar!)
+    { x: 1980, y: 600, width: 600, element: "ground_100" }, // Zona de aterrizaje y aceleración
+    { x: 2650, y: 540, width: 1050, element: "ground_101" }, // Meseta elevada con el Gran Túnel de Rocas
 
-    // --- SECCIÓN 3: El Gran Desfiladero y Oasis Central (7185 a 10800) ---
-    { x: 9020, y: 600, width: 1185, element: "ground_100" }, // Suelo 7: Oasis central de velocidad (5 bloques)
-    { x: 10470, y: 550, width: 480, element: "ground_102" }, // Suelo 8: Entrada al valle de pilares (2 bloques)
+    // --- ZONA 3: El Desfiladero de Pilares de Ritmo (4050 a 6800) ---
+    // (Foso de 350px entre 3700 y 4050)
+    { x: 4050, y: 520, width: 500, element: "ground_102" }, // Rampa intermedia
+    { x: 4750, y: 440, width: 245, element: "ground_103" }, // Pilar de Salto de Ritmo 1
+    { x: 5150, y: 380, width: 245, element: "ground_102" }, // Pilar de Salto de Ritmo 2 (más alto)
+    { x: 5600, y: 460, width: 245, element: "ground_103" }, // Pilar de Salto de Ritmo 3 (descenso)
+    { x: 6050, y: 600, width: 750, element: "ground_099" }, // Aterrizaje inferior
 
-    // --- SECCIÓN 4: El Valle de los Pilares de Ritmo (10940 a 14300) ---
-    { x: 11090, y: 530, width: 245, element: "ground_103" }, // Pilar Ritmo A (1 bloque)
-    { x: 11470, y: 470, width: 245, element: "ground_102" }, // Pilar Ritmo B (1 bloque)
-    { x: 11850, y: 410, width: 245, element: "ground_104" }, // Pilar Ritmo C (1 bloque)
-    { x: 12470, y: 430, width: 245, element: "ground_103" }, // Pilar Ritmo D (1 bloque)
-    { x: 12840, y: 500, width: 245, element: "ground_102" }, // Pilar Ritmo E (1 bloque)
-    { x: 13210, y: 570, width: 245, element: "ground_104" }, // Pilar Ritmo F (1 bloque)
-    { x: 13580, y: 580, width: 715, element: "ground_099" }, // Suelo 9: Meseta intermedia (3 bloques)
+    // --- ZONA 4: La Gran Pista de Despegue (7000 a 8600) ---
+    // (Pista larga para ganar máxima velocidad -> barrera baja -> salto sobre abismo)
+    { x: 7000, y: 600, width: 1600, element: "ground_100" }, // Pista continua con túnel bajo al final
 
-    // --- SECCIÓN 5: Las Islas del Viento y Valle Bajo (14295 a 17600) ---
-    { x: 16030, y: 590, width: 950, element: "ground_100" }, // Suelo 10: Gran aterrizaje acrobático (4 bloques)
-    { x: 17140, y: 590, width: 715, element: "ground_101" }, // Suelo 11: Llanura previa a la subida final (3 bloques)
+    // --- ZONA 5: Valle del Archipiélago y Caverna Subterránea (9000 a 12200) ---
+    // (Foso de 400px entre 8600 y 9000 -> Requiere Sprint-Jump o Dash-Jump)
+    { x: 9000, y: 560, width: 800, element: "ground_101" }, // Meseta tras el salto épico
+    { x: 10050, y: 600, width: 1100, element: "ground_104" }, // Caverna baja subterránea
+    { x: 11400, y: 540, width: 800, element: "ground_102" }, // Rampa de salida
 
-    // --- SECCIÓN 6: La Gran Avenida Triunfal y Meta (17855 a 20800) ---
-    { x: 18460, y: 420, width: 950, element: "ground_099" }, // Suelo 12: Terraza real elevada (4 bloques)
-    { x: 19780, y: 600, width: 950, element: "ground_104" }, // Suelo 13: Pradera del Santuario Final (4 bloques)
+    // --- ZONA 6: La Gran Avenida Triunfal y Meta (12600 a 16600) ---
+    // (Foso de 400px entre 12200 y 12600)
+    { x: 12600, y: 480, width: 950, element: "ground_099" }, // Terraza florida previa a la meta
+    { x: 13800, y: 600, width: 2800, element: "ground_104" }, // Avenida final con el Santuario Dorado
   ],
 
   // =========================================================================
-  // 2. PLATAFORMAS FLOTANTES (Islas combinando los distintos tipos del folder)
+  // 2. PLATAFORMAS FLOTANTES E ISLAS (Saltos aéreos y techos de túneles bajos)
   // =========================================================================
   floatingPlatforms: [
-    // --- Sección 1: Aprendizaje e isla secreta ---
-    { x: 1890, y: 510, element: "ground_044", isFloating: true }, // Isla con flor conectora (153px)
-    { x: 2360, y: 340, element: "ground_040", isFloating: true }, // Isla secreta alta (210px, oro)
-    { x: 2920, y: 520, element: "ground_043", isFloating: true }, // Isla mediana de descenso (183px)
+    // --- TÚNEL BAJO 1: La Primera Barrera de Deslizamiento (Zona 1) ---
+    // Techo a y=465 sobre suelo y=600 -> Hueco libre de 50px (¡Conejo de pie de 72px choca, en Dash pasa!)
+    { x: 950, y: 465, element: "ground_040", isFloating: true }, // Placa de roca baja (210px)
 
-    // --- Sección 2: Doble ruta y despegue ---
-    { x: 3980, y: 540, element: "ground_046", isFloating: true }, // Ruta baja: Isla compacta (131px)
-    { x: 4160, y: 440, element: "ground_047", isFloating: true }, // Ruta alta: Gran isla ancha (212px, oro)
-    { x: 6200, y: 380, element: "ground_045", isFloating: true }, // Isla grande de paso alto (187px)
+    // --- TÚNEL BAJO 2: La Caverna de Roca y Zanahoria Dorada (Zona 2) ---
+    // Dos bloques consecutivos a y=405 sobre suelo y=540 -> Hueco libre de 50px a lo largo de 300px
+    { x: 2850, y: 405, element: "ground_013", isFloating: true }, // Bloque de roca 1 (159px)
+    { x: 3000, y: 405, element: "ground_010", isFloating: true }, // Bloque de roca 2 (138px)
 
-    // --- Sección 3: El Archipiélago Celeste sobre el Gran Abismo (7 islas) ---
-    { x: 7280, y: 510, element: "ground_044", isFloating: true }, // Isla Celeste 1 (153px)
-    { x: 7510, y: 440, element: "ground_043", isFloating: true }, // Isla Celeste 2 (183px)
-    { x: 7770, y: 370, element: "ground_047", isFloating: true }, // Isla Celeste 3 (212px)
-    { x: 8060, y: 290, element: "ground_045", isFloating: true }, // Isla Cima del Mundo (187px, oro)
-    { x: 8320, y: 380, element: "ground_040", isFloating: true }, // Isla Descenso A (210px)
-    { x: 8610, y: 450, element: "ground_046", isFloating: true }, // Isla Descenso B (131px)
-    { x: 8820, y: 500, element: "ground_039", isFloating: true }, // Isla Descenso C redondeada (130px)
-    { x: 10280, y: 510, element: "ground_042", isFloating: true }, // Isla puente a pilares (118px)
+    // --- ISLAS CELESTES Y RUTA ALTA (Zona 3) ---
+    { x: 4400, y: 350, element: "ground_044", isFloating: true }, // Isla con flor previa
+    { x: 5350, y: 220, element: "ground_041", isFloating: true }, // Mini isla en el cielo (Zanahoria Dorada 2)
+    { x: 5850, y: 340, element: "ground_046", isFloating: true }, // Isla intermedia de bajada
 
-    // --- Sección 4: Vértice aéreo sobre los pilares ---
-    { x: 12180, y: 320, element: "ground_040", isFloating: true }, // Cumbre de los pilares (210px, oro)
+    // --- TÚNEL BAJO 3: La Barrera de la Pista de Despegue (Zona 4) ---
+    // Techo justo antes del abismo: ¡debes esprintar, deslizarte por debajo y saltar al salir!
+    { x: 8100, y: 465, element: "ground_047", isFloating: true }, // Isla ancha (212px) actuando como barrera baja
 
-    // --- Sección 5: Las Islas del Viento (Cadena acrobática de 7 islas) ---
-    { x: 14380, y: 500, element: "ground_044", isFloating: true }, // Isla Viento 1 (153px)
-    { x: 14610, y: 440, element: "ground_041", isFloating: true }, // Isla Viento 2 mini (95px)
-    { x: 14780, y: 380, element: "ground_042", isFloating: true }, // Isla Viento 3 compacta (118px)
-    { x: 14980, y: 350, element: "ground_047", isFloating: true }, // Isla Viento 4 ancha (212px)
-    { x: 15280, y: 280, element: "ground_046", isFloating: true }, // Isla Viento 5 la aguja (131px, oro)
-    { x: 15500, y: 380, element: "ground_045", isFloating: true }, // Isla Viento 6 grande (187px)
-    { x: 15770, y: 470, element: "ground_043", isFloating: true }, // Isla Viento 7 lanzadera (183px)
+    // --- EL ARCHIPIÉLAGO CELESTE (Zona 5: Escalera de islas) ---
+    { x: 9500, y: 420, element: "ground_045", isFloating: true }, // Isla grande (187px)
+    { x: 9800, y: 320, element: "ground_043", isFloating: true }, // Isla mediana (183px)
+    { x: 10150, y: 220, element: "ground_042", isFloating: true }, // Isla compacta con Zanahoria Dorada 3!
+    { x: 10550, y: 340, element: "ground_047", isFloating: true }, // Isla ancha de descenso
 
-    // --- Sección 6: Subida real y meta ---
-    { x: 17940, y: 510, element: "ground_044", isFloating: true }, // Escalón real 1 (153px)
-    { x: 18180, y: 440, element: "ground_040", isFloating: true }, // Escalón real 2 (210px)
-    { x: 18830, y: 270, element: "ground_045", isFloating: true }, // Trono celeste sobre terraza (187px, oro)
-    { x: 19500, y: 500, element: "ground_047", isFloating: true }, // Gran rampa flotante final (212px)
+    // --- TÚNEL BAJO 4: Laberinto Bajo Subterráneo (Zona 5) ---
+    { x: 10400, y: 465, element: "ground_016", isFloating: true }, // Bloque de techo 1
+    { x: 10600, y: 465, element: "ground_017", isFloating: true }, // Bloque de techo 2
+
+    // --- ISLAS DE LA ZONA FINAL (Zona 6) ---
+    { x: 13200, y: 380, element: "ground_044", isFloating: true }, // Isla de entrada al santuario
+    { x: 13550, y: 280, element: "ground_041", isFloating: true }, // Mini isla con Zanahoria Dorada 4!
+    { x: 14600, y: 465, element: "ground_040", isFloating: true }, // Arco triunfal bajo
   ],
 
   // =========================================================================
-  // 3. PIEZAS MODULARES LIBRES (Columnas subterráneas y acantilados)
+  // 3. PIEZAS MODULARES LIBRES (Pilares, acantilados y cimientos)
   // =========================================================================
   groundElements: [
-    // Sección 1: Abismos iniciales
-    { element: "ground_000", x: 880, y: 680, isSolid: false, depth: -5 },
-    { element: "ground_004", x: 1110, y: 680, isSolid: false, depth: -5 },
+    // Columnas y acantilados bajo los abismos
+    { element: "ground_000", x: 1500, y: 680, isSolid: false, depth: -5 },
+    { element: "ground_004", x: 1980, y: 680, isSolid: false, depth: -5 },
 
-    // Sección 2: Acantilados de la meseta florida
-    { element: "ground_006", x: 4440, y: 550, isSolid: false, depth: -5 },
-    { element: "ground_021", x: 5320, y: 550, isSolid: false, depth: -5 },
+    // Cimientos del cañón
+    { element: "ground_006", x: 3600, y: 620, isSolid: false, depth: -5 },
+    { element: "ground_021", x: 4050, y: 620, isSolid: false, depth: -5 },
 
-    // Sección 3: Cimientos bajo los bordes del Gran Desfiladero
-    { element: "ground_000", x: 7100, y: 670, isSolid: false, depth: -5 },
-    { element: "ground_004", x: 9020, y: 680, isSolid: false, depth: -5 },
+    // Pilares de piedra verticales
+    { element: "ground_027", x: 4770, y: 530, isSolid: false, depth: -5 },
+    { element: "ground_028", x: 5170, y: 470, isSolid: false, depth: -5 },
+    { element: "ground_030", x: 5620, y: 550, isSolid: false, depth: -5 },
 
-    // Sección 4: Cimientos de piedra bajo los pilares de ritmo
-    { element: "ground_027", x: 11110, y: 620, isSolid: false, depth: -5 },
-    { element: "ground_028", x: 11490, y: 560, isSolid: false, depth: -5 },
-    { element: "ground_030", x: 11870, y: 500, isSolid: false, depth: -5 },
-    { element: "ground_029", x: 12490, y: 520, isSolid: false, depth: -5 },
+    // Columnas del abismo de despegue
+    { element: "ground_000", x: 8500, y: 680, isSolid: false, depth: -5 },
+    { element: "ground_004", x: 9000, y: 680, isSolid: false, depth: -5 },
 
-    // Sección 5: Paredes del valle bajo las Islas del Viento
-    { element: "ground_006", x: 14200, y: 670, isSolid: false, depth: -5 },
-    { element: "ground_021", x: 16030, y: 670, isSolid: false, depth: -5 },
-
-    // Sección 6: Terraza real
-    { element: "ground_024", x: 18460, y: 510, isSolid: false, depth: -5 },
-    { element: "ground_025", x: 19340, y: 510, isSolid: false, depth: -5 },
+    // Acantilado de la terraza real
+    { element: "ground_024", x: 12600, y: 570, isSolid: false, depth: -5 },
+    { element: "ground_025", x: 13500, y: 570, isSolid: false, depth: -5 },
   ],
 
   // =========================================================================
-  // 4. ZANAHORIAS Y TROFEOS DORADOS (Guiando parábolas de salto en las 6 zonas)
+  // 3.5 ELEMENTOS MODULARES DE ENTORNO (únicamente desde enviroment_elements)
+  // =========================================================================
+  environmentElements: [
+    // --- Zona 1: Entrada y Portal del Túnel 1 (Suelo a 600) ---
+    { element: "enviroment_021", x: 250, depth: -2 }, // Árbol frondoso ancestral de fondo
+    { element: "enviroment_019", x: 450, depth: 1 }, // Arbusto verde de pradera
+    { element: "enviroment_012", x: 620, depth: 0 }, // Roca con vegetación
+    { element: "enviroment_022", x: 820, depth: -1 }, // Pino de fondo
+    { element: "enviroment_026", x: 1350, depth: 1 }, // Roca decorativa
+    { element: "enviroment_023", x: 1550, depth: -2 }, // Árbol / estructura alta
+
+    // --- Zona 2: Meseta y Caverna de Roca (Suelo a 600 y 540) ---
+    { element: "enviroment_020", x: 2050, depth: 1 }, // Piedra pequeña
+    { element: "enviroment_021", x: 2350, depth: -2 }, // Árbol en meseta
+    { element: "enviroment_034", x: 2750, depth: -1 }, // Bloque de ruina
+    { element: "enviroment_035", x: 3100, depth: -1 }, // Bloque de ruina 2
+    { element: "enviroment_040", x: 3450, depth: 1 }, // Roca alargada de terreno
+
+    // --- Zona 3: Cañón de Columnas Verticales ---
+    { element: "enviroment_024", x: 4200, depth: 1 },
+    { element: "enviroment_028", x: 4800, depth: -1 },
+    { element: "enviroment_022", x: 5500, depth: -1 },
+    { element: "enviroment_019", x: 6150, depth: 1 },
+
+    // --- Zona 4: Pista de Despegue (Suelo a 600) ---
+    { element: "enviroment_021", x: 7100, depth: -2 },
+    { element: "enviroment_018", x: 7850, depth: 1 },
+    { element: "enviroment_040", x: 8400, depth: 1 },
+
+    // --- Zona 5: Tramo del Laberinto y Templo ---
+    { element: "enviroment_023", x: 9100, depth: -2 },
+    { element: "enviroment_034", x: 10400, depth: -1 },
+    { element: "enviroment_035", x: 11000, depth: -1 },
+    { element: "enviroment_026", x: 11450, depth: 1 },
+
+    // --- Zona 6: Meta Real (Suelo a 480 y 600) ---
+    { element: "enviroment_021", x: 14050, depth: -2 },
+    { element: "enviroment_022", x: 15100, depth: -1 },
+    { element: "enviroment_038", x: 15400, depth: 1 },
+    { element: "enviroment_021", x: 16100, depth: -2, scale: 1.1, flipX: true },
+  ],
+
+  // =========================================================================
+  // 4. ZANAHORIAS Y TROFEOS DORADOS (Guiando parábolas de salto y túneles)
   // =========================================================================
   carrots: [
-    // --- Sección 1: Pradera de inicio ---
-    { x: 260, y: 550 },
-    { x: 380, y: 550 },
-    { x: 520, y: 550 },
-    { x: 680, y: 550 },
-    { x: 820, y: 550 },
-    // Arco sobre el 1er agujero
-    { x: 990, y: 520 },
-    { x: 1030, y: 470 },
-    { x: 1070, y: 520 },
-    // Suelo 2
-    { x: 1200, y: 550 },
-    { x: 1360, y: 550 },
-    { x: 1520, y: 550 },
-    // Subida y meseta suave
-    { x: 1960, y: 460 },
-    { x: 2240, y: 430 },
-    { x: 2460, y: 270, isGold: true }, // [ORO 1] Isla secreta alta
-    { x: 2580, y: 430 },
-    { x: 2720, y: 430 },
-    { x: 3010, y: 470 },
-    { x: 3280, y: 550 },
-    { x: 3500, y: 550 },
-    { x: 3720, y: 550 },
+    // --- Zona 1: Inicio y Túnel Bajo 1 ---
+    { x: 300, y: 550 },
+    { x: 450, y: 550 },
+    { x: 600, y: 550 },
+    { x: 750, y: 550 },
+    // Zanahorias dentro del Túnel 1 (a ras de suelo y=575)
+    { x: 980, y: 575 },
+    { x: 1040, y: 575 },
+    { x: 1100, y: 575 },
+    { x: 1250, y: 550 },
+    { x: 1400, y: 550 },
+    // Parábola del Gran Salto de Sprint 1 (sobre el foso de 380px)
+    { x: 1680, y: 510 },
+    { x: 1790, y: 440 },
+    { x: 1900, y: 510 },
 
-    // --- Sección 2: Colinas escalonadas y doble ruta ---
-    { x: 4040, y: 490 },
-    { x: 4260, y: 370, isGold: true }, // [ORO 2] Ruta alta de riesgo
-    { x: 4560, y: 410 },
-    { x: 4760, y: 410 },
-    { x: 4960, y: 410 },
-    { x: 5160, y: 410 },
-    { x: 5360, y: 410 },
-    // Pilares
-    { x: 5630, y: 470 },
-    { x: 5790, y: 440 },
-    { x: 6000, y: 410 },
-    { x: 6290, y: 320 },
-    { x: 6410, y: 450 },
-    { x: 6600, y: 530 },
-    { x: 6800, y: 530 },
-    { x: 7000, y: 530 },
+    // --- Zona 2: Meseta y Caverna de Roca ---
+    { x: 2100, y: 550 },
+    { x: 2300, y: 550 },
+    { x: 2500, y: 500 },
+    { x: 2700, y: 490 },
+    // ¡Zanahoria Dorada 1 dentro del túnel largo de roca!
+    { x: 2950, y: 515, isGold: true },
+    { x: 3200, y: 490 },
+    { x: 3400, y: 490 },
+    // Salto sobre el foso de 350px hacia Zona 3
+    { x: 3780, y: 470 },
+    { x: 3880, y: 410 },
+    { x: 3970, y: 470 },
 
-    // --- Sección 3: El Gran Archipiélago Celeste ---
-    { x: 7350, y: 460 },
-    { x: 7600, y: 390 },
-    { x: 7870, y: 320 },
-    { x: 8150, y: 210, isGold: true }, // [ORO 3] Cumbre del archipiélago
-    { x: 8420, y: 330 },
-    { x: 8670, y: 400 },
-    { x: 8880, y: 450 },
-    // Oasis central (recta de velocidad)
-    { x: 9140, y: 550 },
-    { x: 9340, y: 550 },
-    { x: 9540, y: 550 },
-    { x: 9740, y: 550 },
-    { x: 9940, y: 550 },
-    { x: 10140, y: 550 },
-    { x: 10340, y: 460 },
-    { x: 10600, y: 500 },
-    { x: 10800, y: 500 },
+    // --- Zona 3: Pilares de Ritmo y Cumbre Aérea ---
+    { x: 4200, y: 470 },
+    { x: 4470, y: 310 }, // Sobre isla de flor
+    { x: 4870, y: 390 }, // Sobre pilar 1
+    { x: 5270, y: 330 }, // Sobre pilar 2
+    // ¡Zanahoria Dorada 2 en la mini isla celeste más alta!
+    { x: 5400, y: 170, isGold: true },
+    { x: 5720, y: 410 }, // Sobre pilar 3
+    { x: 5920, y: 300 }, // Sobre isla intermedia
+    { x: 6200, y: 550 },
+    { x: 6450, y: 550 },
+    { x: 6700, y: 550 },
 
-    // --- Sección 4: El Valle de los Pilares de Ritmo ---
-    { x: 11210, y: 480 },
-    { x: 11380, y: 450 },
-    { x: 11590, y: 420 },
-    { x: 11760, y: 390 },
-    { x: 11970, y: 360 },
-    { x: 12280, y: 240, isGold: true }, // [ORO 4] Cumbre de los pilares
-    { x: 12590, y: 380 },
-    { x: 12960, y: 450 },
-    { x: 13330, y: 520 },
-    { x: 13700, y: 530 },
-    { x: 13900, y: 530 },
-    { x: 14100, y: 530 },
+    // --- Zona 4: Pista de Despegue (Sprint -> Slide -> Leap) ---
+    { x: 7150, y: 550 },
+    { x: 7350, y: 550 },
+    { x: 7550, y: 550 },
+    { x: 7750, y: 550 },
+    // Zanahorias bajo la barrera de deslizamiento
+    { x: 8150, y: 575 },
+    { x: 8250, y: 575 },
+    // Gran parábola del salto tras el dash sobre el abismo de 400px
+    { x: 8680, y: 490 },
+    { x: 8780, y: 420 },
+    { x: 8880, y: 490 },
 
-    // --- Sección 5: Las Islas del Viento ---
-    { x: 14450, y: 450 },
-    { x: 14650, y: 390 },
-    { x: 14840, y: 330 },
-    { x: 15040, y: 300 },
-    { x: 15120, y: 300 },
-    { x: 15340, y: 200, isGold: true }, // [ORO 5] La Aguja Celeste
-    { x: 15590, y: 330 },
-    { x: 15860, y: 420 },
-    // Aterrizaje y foso final
-    { x: 16150, y: 540 },
-    { x: 16400, y: 540 },
-    { x: 16650, y: 540 },
-    { x: 16900, y: 540 },
-    { x: 17060, y: 460 }, // Arco sobre foso
-    { x: 17300, y: 540 },
-    { x: 17550, y: 540 },
-    { x: 17750, y: 540 },
+    // --- Zona 5: El Archipiélago Celeste y Caverna Subterránea ---
+    { x: 9150, y: 510 },
+    { x: 9350, y: 510 },
+    { x: 9550, y: 380 },
+    { x: 9850, y: 280 },
+    // ¡Zanahoria Dorada 3 en la cima del archipiélago!
+    { x: 10200, y: 180, isGold: true },
+    { x: 10600, y: 300 },
+    // Zanahorias dentro del túnel subterráneo bajo
+    { x: 10450, y: 575 },
+    { x: 10550, y: 575 },
+    { x: 10650, y: 575 },
+    { x: 10900, y: 550 },
+    { x: 11200, y: 550 },
+    { x: 11500, y: 500 },
+    { x: 11800, y: 490 },
+    { x: 12100, y: 490 },
 
-    // --- Sección 6: La Gran Avenida Triunfal y Meta ---
-    { x: 18010, y: 460 },
-    { x: 18280, y: 390 },
-    { x: 18580, y: 370 },
-    { x: 18780, y: 370 },
-    { x: 18920, y: 190, isGold: true }, // [ORO 6] Trono celeste real
-    { x: 19080, y: 370 },
-    { x: 19300, y: 370 },
-    { x: 19600, y: 450 },
-    // Gran recta final
-    { x: 19880, y: 550 },
-    { x: 20020, y: 550 },
-    { x: 20160, y: 550 },
-    { x: 20300, y: 530 },
+    // --- Zona 6: Avenida Triunfal y Meta ---
+    { x: 12700, y: 440 },
+    { x: 12900, y: 440 },
+    // ¡Zanahoria Dorada 4 sobre la isla del santuario!
+    { x: 13600, y: 240, isGold: true },
+    { x: 13900, y: 550 },
+    { x: 14100, y: 550 },
+    { x: 14300, y: 550 },
+    { x: 14500, y: 550 },
+    // Zanahoria bajo el arco triunfal
+    { x: 14650, y: 575 },
+    { x: 14750, y: 575 },
+    { x: 15000, y: 550 },
+    { x: 15300, y: 550 },
   ],
 
   // =========================================================================
-  // 5. META FINAL DEL NIVEL (Santuario al final de los 20,800 px)
+  // 5. CAJAS ROMPIBLES (Vacío: sin referencias nulas)
   // =========================================================================
-  goal: { x: 20450, y: 610 },
+  boxes: [],
+
+  // =========================================================================
+  // 6. ELEMENTOS ESCÉNICOS Y DECORATIVOS (Props clásicos eliminados; se usa environmentElements)
+  // =========================================================================
+  props: [],
+
+  // =========================================================================
+  // 7. META FINAL DEL NIVEL (Santuario al final del mundo)
+  // =========================================================================
+  goal: { x: 15600, y: 610 },
 
   waterHazards: [],
   bridges: [],
-  props: [],
-  enemies: [],
-  boxes: [],
+  enemies: [], // Sin enemigos según la petición del usuario
 };

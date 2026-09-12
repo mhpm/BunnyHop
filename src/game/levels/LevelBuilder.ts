@@ -8,8 +8,15 @@ import { Caterpillar } from "../entities/Caterpillar";
 import { Snail } from "../entities/Snail";
 import { Beetle } from "../entities/Beetle";
 import { ParticleManager } from "../systems/ParticleManager";
-import { EnemyType, PropType, GroundElementPlacement } from "./levelData";
+import {
+  EnemyType,
+  PropType,
+  GroundElementPlacement,
+  EnvironmentElementPlacement,
+  GroundSegmentConfig,
+} from "./levelData";
 import { GroundElementId, GROUND_ELEMENTS_MAP } from "../config/groundElements";
+import { getEnvironmentElementMeta } from "../config/environmentElements";
 
 export interface LevelBuilderContext {
   scene: Phaser.Scene;
@@ -37,7 +44,26 @@ export class LevelBuilder {
   public static readonly HITBOX_OFFSET_X = 10;
   public static readonly HITBOX_OFFSET_Y = 20;
 
+  private groundSegments: GroundSegmentConfig[] = [];
+
   constructor(private context: LevelBuilderContext) {}
+
+  public setGroundSegments(segments: GroundSegmentConfig[]): void {
+    this.groundSegments = segments;
+  }
+
+  /**
+   * Obtiene la cota Y del suelo en la coordenada X dada.
+   * Si no coincide exactamente con ningún segmento (p. ej. en un foso), devuelve 600 por defecto.
+   */
+  public getGroundYAt(x: number): number {
+    for (const seg of this.groundSegments) {
+      if (x >= seg.x && x <= seg.x + seg.width) {
+        return seg.y;
+      }
+    }
+    return 600;
+  }
 
   /**
    * Crea uno o varios bloques de suelo consecutivos en la posición indicada.
@@ -131,7 +157,7 @@ export class LevelBuilder {
     const meta = GROUND_ELEMENTS_MAP[config.element];
     if (!meta) {
       console.warn(`[LevelBuilder] Elemento no encontrado: ${config.element}`);
-      return scene.add.image(config.x, config.y, "ground_tile");
+      return scene.add.image(config.x, config.y, "ground_104");
     }
 
     const scale = config.scale ?? 1;
@@ -169,6 +195,63 @@ export class LevelBuilder {
       img.setScale(scale);
       img.setFlipX(!!config.flipX);
       img.setDepth(depth);
+      return img;
+    }
+  }
+
+  /**
+   * Crea un elemento de entorno del catálogo de enviroment_elements.
+   * Se posiciona siempre firmemente sobre el nivel del suelo (origin: 0.5, 1, no flotando).
+   * Si config.y no se define, se calcula automáticamente según la altura del suelo en la coordenada X.
+   */
+  public createEnvironmentElement(
+    config: EnvironmentElementPlacement,
+  ): Phaser.Physics.Arcade.Sprite | Phaser.GameObjects.Image {
+    const { platforms, scene } = this.context;
+    const meta = getEnvironmentElementMeta(config.element);
+
+    const scale = config.scale ?? 1;
+    const depth = config.depth ?? meta.defaultDepth ?? 1;
+    const isSolid = config.isSolid === true;
+
+    // Determinamos la altura del suelo en la coordenada X para que descanse en tierra
+    // Se añade un sutil +5px para que la base quede firmemente asentada en el césped sin flotar
+    const groundY = config.y !== undefined ? config.y : (this.getGroundYAt(config.x) + 5);
+    const targetY = groundY + (config.offsetY ?? 0);
+    const posX = config.x;
+
+    if (isSolid) {
+      const sprite = platforms.create(
+        posX,
+        targetY,
+        meta.id,
+      ) as Phaser.Physics.Arcade.Sprite;
+      sprite.setOrigin(0.5, 1);
+      sprite.setScale(scale);
+      sprite.setFlipX(!!config.flipX);
+      sprite.setDepth(depth);
+      if (config.alpha !== undefined) sprite.setAlpha(config.alpha);
+
+      const bw = (config.hitbox?.width ?? meta.width) * scale;
+      const bh = (config.hitbox?.height ?? meta.height) * scale;
+      const ox = (config.hitbox?.offsetX ?? 0) * scale;
+      const oy = (config.hitbox?.offsetY ?? 0) * scale;
+
+      const staticBody = sprite.body as Phaser.Physics.Arcade.StaticBody;
+      staticBody.width = bw;
+      staticBody.height = bh;
+      staticBody.offset.set(ox, oy);
+      staticBody.position.x = sprite.x - sprite.displayOriginX + ox;
+      staticBody.position.y = sprite.y - sprite.displayOriginY + oy;
+
+      return sprite;
+    } else {
+      const img = scene.add.image(posX, targetY, meta.id);
+      img.setOrigin(0.5, 1);
+      img.setScale(scale);
+      img.setFlipX(!!config.flipX);
+      img.setDepth(depth);
+      if (config.alpha !== undefined) img.setAlpha(config.alpha);
       return img;
     }
   }

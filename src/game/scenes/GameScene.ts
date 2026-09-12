@@ -11,6 +11,7 @@ import {
   PropType,
   EnemyType,
   GroundElementPlacement,
+  EnvironmentElementPlacement,
 } from "../levels/levelData";
 import { LevelBuilder } from "../levels/LevelBuilder";
 import { GroundElementId, GROUND_ELEMENTS_MAP } from "../config/groundElements";
@@ -171,6 +172,10 @@ export class GameScene extends Phaser.Scene {
     return this.levelBuilder.createGroundElement(config);
   }
 
+  public createEnvironmentElement(config: EnvironmentElementPlacement) {
+    return this.levelBuilder.createEnvironmentElement(config);
+  }
+
   public createBridge(
     x: number,
     y: number,
@@ -209,6 +214,9 @@ export class GameScene extends Phaser.Scene {
    * Construye el nivel a partir de la configuración o usando métodos directos
    */
   private buildLevel(config: LevelConfig): void {
+    // 0. Registramos segmentos de suelo para el anclaje automático de elementos de entorno a tierra
+    this.levelBuilder.setGroundSegments(config.groundSegments);
+
     // 1. Elementos escénicos / Props
     config.props.forEach((p) => this.createProp(p.type, p.x, p.y, p.scale));
 
@@ -229,6 +237,11 @@ export class GameScene extends Phaser.Scene {
     // 3.5 Elementos modulares sueltos / combinados de ground_elements
     if (config.groundElements) {
       config.groundElements.forEach((el) => this.createGroundElement(el));
+    }
+
+    // 3.6 Elementos modulares de escenografía de entorno (enviroment_elements)
+    if (config.environmentElements) {
+      config.environmentElements.forEach((el) => this.createEnvironmentElement(el));
     }
 
     // 4. Puentes de madera
