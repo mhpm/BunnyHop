@@ -31,6 +31,40 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   private moveHoldTimer = 0;
   private currentMoveDir: "left" | "right" | "none" = "none";
   private runDustTimer = 0;
+  private runInertiaTimer = 0; // Inercia física tras sprint (ms)
+  private runInertiaSpeed = 0;
+  private runInertiaDir = 1;
+  private readonly maxRunInertiaTime = 480; // Ventana de inercia suave tras correr
+
+  // Dash & Slide
+  public isDashing = false;
+  private currentDashSpeed = 0;
+  private dashDirection = 1;
+  private readonly dashDeceleration = 450; // Deceleración gradual (px/s²)
+  private dashDustTimer = 0;
+  private currentHitbox: "standing" | "dash" = "standing";
+
+  public setHitboxMode(mode: "standing" | "dash"): void {
+    if (this.currentHitbox === mode) return;
+
+    if (mode === "dash") {
+      // Ajuste de anclaje visual (origin) para la textura de 218x125px:
+      // Con las patas en y=118 y las texturas de pie con altura ~175px (centro 87.5px),
+      // situamos el anclaje vertical en 31/125 para que el conejo repose exactamente sobre el suelo sin flotar
+      this.setOrigin(0.5, 31 / 125);
+      const dashWidth = 140;
+      const dashHeight = 60;
+      this.setSize(dashWidth, dashHeight);
+      this.setOffset(50, 58); // Caja rectangular horizontal centrada (140x60) en contacto con el suelo
+      this.currentHitbox = "dash";
+    } else {
+      // Restauramos el anclaje centrado y la caja vertical estándar (60 ancho x 120 alto)
+      this.setOrigin(0.5, 0.5);
+      this.setSize(60, 120);
+      this.setOffset(40, 55);
+      this.currentHitbox = "standing";
+    }
+  }
 
   // State flags
   public isHurt = false;
@@ -43,6 +77,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   public touchLeft = false;
   public touchRight = false;
   public touchJump = false;
+  public touchDash = false;
 
   constructor(
     scene: Phaser.Scene,
@@ -79,6 +114,14 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         right: Phaser.Input.Keyboard.KeyCodes.D,
         space: Phaser.Input.Keyboard.KeyCodes.SPACE,
       }) as { [key: string]: Phaser.Input.Keyboard.Key };
+
+      this.scene.input.keyboard.addCapture([
+        Phaser.Input.Keyboard.KeyCodes.DOWN,
+        Phaser.Input.Keyboard.KeyCodes.UP,
+        Phaser.Input.Keyboard.KeyCodes.LEFT,
+        Phaser.Input.Keyboard.KeyCodes.RIGHT,
+        Phaser.Input.Keyboard.KeyCodes.SPACE,
+      ]);
     }
   }
 
@@ -130,17 +173,23 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       this.jumpBufferTimer = Math.max(0, this.jumpBufferTimer - delta);
     }
 
-    // 3. Movement handling
+    // 3. Movement & Dash handling
+    let downHolding = false;
     if (!this.isHurt) {
       const left =
-        this.cursors?.left?.isDown ||
-        this.wasdKeys?.left?.isDown ||
+        (this.cursors?.left?.isDown ?? false) ||
+        (this.wasdKeys?.left?.isDown ?? false) ||
         this.touchLeft;
       const right =
-        this.cursors?.right?.isDown ||
-        this.wasdKeys?.right?.isDown ||
+        (this.cursors?.right?.isDown ?? false) ||
+        (this.wasdKeys?.right?.isDown ?? false) ||
         this.touchRight;
+      downHolding =
+        (this.cursors?.down?.isDown ?? false) ||
+        (this.wasdKeys?.down?.isDown ?? false) ||
+        this.touchDash;
 
+      // Determine desired horizontal input direction
       let desiredDir: "left" | "right" | "none" = "none";
       if (left && !right) {
         desiredDir = "left";
@@ -148,46 +197,154 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         desiredDir = "right";
       }
 
-      // Track continuous hold time for the direction (sprint after 2 seconds)
+      // Track continuous hold time for sprint (starts running after 2 seconds)
       if (desiredDir !== "none" && desiredDir === this.currentMoveDir) {
         this.moveHoldTimer += delta;
       } else if (desiredDir !== "none") {
         this.currentMoveDir = desiredDir;
         this.moveHoldTimer = 0;
+        this.runInertiaTimer = 0; // Changing direction cancels previous run inertia
       } else {
+        // User released horizontal movement keys
+        if (this.isRunning) {
+          // Grant running inertia so character glides smoothly rather than stopping dead
+          this.runInertiaTimer = this.maxRunInertiaTime;
+          this.runInertiaSpeed = this.moveSpeed * this.runSpeedMultiplier;
+          this.runInertiaDir = this.flipX ? -1 : 1;
+        }
         this.currentMoveDir = "none";
         this.moveHoldTimer = 0;
       }
 
       this.isRunning = this.moveHoldTimer >= this.runThresholdTime;
-      const currentSpeed = this.isRunning
-        ? this.moveSpeed * this.runSpeedMultiplier
-        : this.moveSpeed;
 
+      // Update facing direction when advancing
       if (desiredDir === "left") {
-        this.setVelocityX(-currentSpeed);
         this.setFlipX(true);
       } else if (desiredDir === "right") {
-        this.setVelocityX(currentSpeed);
         this.setFlipX(false);
-      } else {
-        this.setVelocityX(0);
       }
 
-      // Running dust effect when sprinting on the ground
-      if (this.isRunning && isGrounded && Math.abs(body.velocity.x) > 0) {
-        this.runDustTimer += delta;
-        if (this.runDustTimer >= 200) {
-          this.runDustTimer = 0;
-          const dustOffsetX = this.flipX ? 16 : -16;
-          this.particles.emitDust(this.x + dustOffsetX, this.y + 30, 2);
+      // --- DASH / CROUCH LOGIC ---
+      // Whenever down/dash is held on the ground: ALWAYS activate dash mode!
+      // (Works when quieto, caminando, or corriendo!)
+      if (downHolding && (isGrounded || this.coyoteTimer > 0)) {
+        if (!this.isDashing) {
+          this.isDashing = true;
+          this.dashDustTimer = 0;
+
+          if (this.isRunning) {
+            // High-speed sprint dash
+            this.dashDirection = this.flipX ? -1 : 1;
+            this.currentDashSpeed = this.moveSpeed * this.runSpeedMultiplier;
+            this.particles.emitDust(this.x, this.y + 30, 6);
+            audioManager.playJump();
+          } else if (this.runInertiaTimer > 0) {
+            // Dash launched during running inertia coast
+            this.dashDirection = this.runInertiaDir;
+            this.currentDashSpeed = this.runInertiaSpeed;
+            this.setFlipX(this.dashDirection < 0);
+            this.particles.emitDust(this.x, this.y + 30, 6);
+            audioManager.playJump();
+          } else if (desiredDir !== "none") {
+            // Walking dash
+            this.dashDirection = desiredDir === "left" ? -1 : 1;
+            this.currentDashSpeed = this.moveSpeed;
+            this.particles.emitDust(this.x, this.y + 30, 3);
+          } else {
+            // Standing still (quieto): crouch dash pose!
+            this.dashDirection = this.flipX ? -1 : 1;
+            this.currentDashSpeed = 0;
+          }
+
+          // Consume run inertia once dash starts
+          this.runInertiaTimer = 0;
+          this.isRunning = false;
+          this.moveHoldTimer = 0;
+        }
+
+        // Active dash physics: gradually lose speed (decelerate)
+        const hitWall =
+          (this.dashDirection > 0 && body.blocked.right) ||
+          (this.dashDirection < 0 && body.blocked.left);
+
+        if (hitWall) {
+          this.currentDashSpeed = 0;
+        }
+
+        if (this.currentDashSpeed > 0) {
+          this.currentDashSpeed = Math.max(
+            0,
+            this.currentDashSpeed - this.dashDeceleration * (delta / 1000),
+          );
+          this.setVelocityX(this.currentDashSpeed * this.dashDirection);
+
+          // Continuous sliding dust trail
+          this.dashDustTimer += delta;
+          if (this.dashDustTimer >= 70 && this.currentDashSpeed > 60) {
+            this.dashDustTimer = 0;
+            const dustOffsetX = this.dashDirection > 0 ? -22 : 22;
+            this.particles.emitDust(this.x + dustOffsetX, this.y + 30, 2);
+          }
+        } else {
+          // Speed depleted to 0: stays in crouched dash pose until down is released
+          this.setVelocityX(0);
         }
       } else {
-        this.runDustTimer = 0;
+        // Not holding down or not on ground: exit dash mode
+        this.isDashing = false;
+        this.currentDashSpeed = 0;
+
+        // Standard movement
+        const currentSpeed = this.isRunning
+          ? this.moveSpeed * this.runSpeedMultiplier
+          : this.moveSpeed;
+
+        if (desiredDir === "left") {
+          this.setVelocityX(-currentSpeed);
+        } else if (desiredDir === "right") {
+          this.setVelocityX(currentSpeed);
+        } else {
+          // Coast with running inertia if active
+          if (this.runInertiaTimer > 0 && Math.abs(body.velocity.x) > 0) {
+            this.runInertiaTimer = Math.max(0, this.runInertiaTimer - delta);
+            const ratio = this.runInertiaTimer / this.maxRunInertiaTime;
+            const inertiaSpeed = this.runInertiaSpeed * ratio;
+            this.setVelocityX(inertiaSpeed * this.runInertiaDir);
+
+            // Dust while coasting with inertia
+            this.runDustTimer += delta;
+            if (this.runDustTimer >= 150) {
+              this.runDustTimer = 0;
+              const dustOffsetX = this.runInertiaDir > 0 ? -16 : 16;
+              this.particles.emitDust(this.x + dustOffsetX, this.y + 30, 2);
+            }
+          } else {
+            this.runInertiaTimer = 0;
+            this.setVelocityX(0);
+          }
+        }
+
+        // Running dust effect when sprinting on the ground
+        if (this.isRunning && isGrounded && Math.abs(body.velocity.x) > 0) {
+          this.runDustTimer += delta;
+          if (this.runDustTimer >= 180) {
+            this.runDustTimer = 0;
+            const dustOffsetX = this.flipX ? 16 : -16;
+            this.particles.emitDust(this.x + dustOffsetX, this.y + 30, 2);
+          }
+        } else if (!this.runInertiaTimer) {
+          this.runDustTimer = 0;
+        }
       }
 
-      // Execute jump if buffered and within coyote time
+      // Execute jump if buffered and within coyote time (can jump out of dash)
       if (this.jumpBufferTimer > 0 && this.coyoteTimer > 0) {
+        if (this.isDashing) {
+          this.isDashing = false;
+          this.currentDashSpeed = 0;
+          this.setHitboxMode("standing");
+        }
         this.doJump();
       }
 
@@ -205,7 +362,12 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     }
 
     // 4. Update animations & visual state
-    this.updateAnimation(isGrounded, body.velocity.x, body.velocity.y);
+    this.updateAnimation(
+      isGrounded,
+      body.velocity.x,
+      body.velocity.y,
+      downHolding,
+    );
 
     this.wasGrounded = isGrounded;
   }
@@ -271,7 +433,11 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     this.isInvulnerable = true;
     this.moveHoldTimer = 0;
     this.isRunning = false;
+    this.runInertiaTimer = 0;
+    this.isDashing = false;
+    this.currentDashSpeed = 0;
     this.currentMoveDir = "none";
+    this.setHitboxMode("standing");
     const knockbackDir = this.x < fromX ? -1 : 1;
     this.setVelocity(knockbackDir * 190, -280);
 
@@ -301,7 +467,11 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     this.isDead = true;
     this.moveHoldTimer = 0;
     this.isRunning = false;
+    this.runInertiaTimer = 0;
+    this.isDashing = false;
+    this.currentDashSpeed = 0;
     this.currentMoveDir = "none";
+    this.setHitboxMode("standing");
     this.setVelocity(0, -320);
     this.setCollideWorldBounds(false);
     audioManager.playGameOver();
@@ -323,7 +493,11 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     this.isVictorious = true;
     this.moveHoldTimer = 0;
     this.isRunning = false;
+    this.runInertiaTimer = 0;
+    this.isDashing = false;
+    this.currentDashSpeed = 0;
     this.currentMoveDir = "none";
+    this.setHitboxMode("standing");
     this.setVelocity(0, -220);
     audioManager.playVictory();
 
@@ -337,15 +511,36 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     });
   }
 
-  private updateAnimation(isGrounded: boolean, vx: number, _vy: number): void {
+  private updateAnimation(
+    isGrounded: boolean,
+    vx: number,
+    _vy: number,
+    downHolding: boolean,
+  ): void {
     if (!this.body) return;
 
+    // 1. PRIORIDAD TOTAL AL DASH / AGACHARSE:
+    // Si se mantiene presionado abajo o está en dash, JAMÁS se activa la animación de jump
+    if (this.isDashing || downHolding) {
+      this.anims.timeScale = 1;
+      this.play("bunny_dash_anim", true);
+      this.setHitboxMode("dash");
+      return;
+    }
+
+    // 2. SALTO / EN EL AIRE (Solo si NO se mantiene abajo y NO está en dash)
     if (!isGrounded) {
       this.anims.timeScale = 1;
       this.play("bunny_jump_anim", true);
+      this.setHitboxMode("standing");
       this.setOffset(36, 53);
-    } else if (Math.abs(vx) > 0) {
-      if (this.isRunning) {
+      return;
+    }
+
+    // 3. MOVIMIENTO EN TIERRA (Correr / Caminar)
+    this.setHitboxMode("standing");
+    if (Math.abs(vx) > 10) {
+      if (this.isRunning || this.runInertiaTimer > 0) {
         this.anims.timeScale = 1;
         this.play("bunny_run_anim", true);
         this.setOffset(48, 55);
@@ -355,6 +550,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         this.setOffset(40, 55);
       }
     } else {
+      // 4. QUIETO (IDLE)
       this.anims.timeScale = 1;
       this.play("bunny_idle_anim", true);
       this.setOffset(40, 55);

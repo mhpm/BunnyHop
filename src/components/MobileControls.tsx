@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowLeft, ArrowRight, ArrowUp } from 'lucide-react';
+import { ArrowLeft, ArrowRight, ArrowUp, Zap } from 'lucide-react';
 import { GameScene } from '../game/scenes/GameScene';
 
 interface MobileControlsProps {
@@ -22,6 +22,12 @@ export const MobileControls: React.FC<MobileControlsProps> = ({ gameScene }) => 
   const triggerJump = (active: boolean) => {
     if (gameScene?.player) {
       gameScene.player.touchJump = active;
+    }
+  };
+
+  const triggerDash = (active: boolean) => {
+    if (gameScene?.player) {
+      gameScene.player.touchDash = active;
     }
   };
 
@@ -77,8 +83,17 @@ export const MobileControls: React.FC<MobileControlsProps> = ({ gameScene }) => 
         </button>
       </div>
 
-      {/* Jump Button */}
+      {/* Action Buttons: Dash & Jump */}
       <div className="mobile-actions">
+        <button
+          className="touch-btn touch-btn-dash"
+          {...createPointerHandlers(triggerDash)}
+          aria-label="Dash"
+        >
+          <Zap size={28} />
+          <span className="jump-label">DASH</span>
+        </button>
+
         <button
           className="touch-btn touch-btn-jump"
           {...createPointerHandlers(triggerJump)}

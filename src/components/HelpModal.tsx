@@ -34,6 +34,10 @@ export const HelpModal: React.FC<HelpModalProps> = ({ onClose }) => {
                 <span>Saltar (mantén para más altura)</span>
               </div>
               <div className="control-item">
+                <span className="key-cap">S</span> / <span className="key-cap">↓</span>
+                <span>Dash al correr (deslizamiento veloz)</span>
+              </div>
+              <div className="control-item">
                 <span className="key-cap">ESC</span>
                 <span>Pausar</span>
               </div>

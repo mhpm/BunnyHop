@@ -47,6 +47,15 @@ export class PreloadScene extends Phaser.Scene {
         frameHeight: 175,
       },
     );
+    // bunny dash (1 frame 218x125)
+    this.load.spritesheet(
+      "bunny_dash",
+      "/assets/sprites/bunny/bunny_dash.png",
+      {
+        frameWidth: 218,
+        frameHeight: 125,
+      },
+    );
 
     // 2. Load Platform & Ground (incluyendo todo el catálogo de ground_elements)
     this.load.image("rich_platform", "/assets/environment/platform_float.png");
@@ -115,6 +124,15 @@ export class PreloadScene extends Phaser.Scene {
         end: 4,
       }),
       frameRate: 12,
+      repeat: -1,
+    });
+    this.anims.create({
+      key: "bunny_dash_anim",
+      frames: this.anims.generateFrameNumbers("bunny_dash", {
+        start: 0,
+        end: 0,
+      }),
+      frameRate: 1,
       repeat: -1,
     });
 

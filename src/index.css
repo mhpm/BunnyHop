@@ -656,6 +656,9 @@ html, body {
 }
 
 .mobile-actions {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
   pointer-events: auto;
 }
 
@@ -687,6 +690,23 @@ html, body {
 .touch-btn-dir {
   width: 68px;
   height: 68px;
+}
+
+.touch-btn-dash {
+  width: 68px;
+  height: 68px;
+  background: rgba(255, 152, 0, 0.42);
+  border: 3px solid rgba(255, 255, 255, 0.65);
+  color: #FFFFFF;
+  flex-direction: column;
+  gap: 2px;
+  box-shadow: 0 4px 20px rgba(255, 152, 0, 0.2);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.45);
+}
+
+.touch-btn-dash:active {
+  background: rgba(255, 152, 0, 0.8);
+  border-color: #FFFFFF;
 }
 
 .touch-btn-jump {
@@ -888,6 +908,30 @@ html, body {
   .controls-grid {
     gap: 4px;
     font-size: 12px;
+  }
+
+  .mobile-controls-container {
+    bottom: 10px;
+    padding: 0 16px;
+  }
+
+  .touch-btn-dir {
+    width: 58px;
+    height: 58px;
+  }
+
+  .touch-btn-dash {
+    width: 58px;
+    height: 58px;
+  }
+
+  .touch-btn-jump {
+    width: 68px;
+    height: 68px;
+  }
+
+  .mobile-actions {
+    gap: 8px;
   }
 }
 
