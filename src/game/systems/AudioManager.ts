@@ -1,9 +1,14 @@
 import { useGameStore } from '../../store/gameStore';
+import type Phaser from 'phaser';
 
 class AudioManager {
   private ctx: AudioContext | null = null;
+  private soundManager: Phaser.Sound.BaseSoundManager | null = null;
+  private bgmSound: Phaser.Sound.BaseSound | null = null;
   private bgmPlaying = false;
-  private bgmInterval: number | null = null;
+  private bgmAudio: HTMLAudioElement | null = null;
+  private lastSkidTime = 0;
+  private readonly bgmSrc = '/assets/music/background_music/bg_music_world_1.mp3';
 
   constructor() {
     // Lazy initialize AudioContext on user interaction
@@ -11,6 +16,7 @@ class AudioManager {
 
   private getContext(): AudioContext | null {
     if (!this.ctx) {
+      if (typeof window === "undefined") return null;
       const AudioContextClass = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
       if (AudioContextClass) {
         this.ctx = new AudioContextClass();
@@ -44,6 +50,63 @@ class AudioManager {
 
     osc.start(now);
     osc.stop(now + 0.23);
+  }
+
+  public playSkid(): void {
+    if (!useGameStore.getState().soundEnabled) return;
+    const ctx = this.getContext();
+    if (!ctx) return;
+
+    const now = ctx.currentTime;
+    if (now - this.lastSkidTime < 0.12) return;
+    this.lastSkidTime = now;
+
+    const duration = 0.22;
+
+    // 1. Ruido blanco filtrado para fricción con el suelo / césped
+    const bufferSize = Math.floor(ctx.sampleRate * duration);
+    const noiseBuffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+    const output = noiseBuffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++) {
+      output[i] = Math.random() * 2 - 1;
+    }
+
+    const noiseSource = ctx.createBufferSource();
+    noiseSource.buffer = noiseBuffer;
+
+    const bandpass = ctx.createBiquadFilter();
+    bandpass.type = "bandpass";
+    bandpass.frequency.setValueAtTime(1400, now);
+    bandpass.frequency.exponentialRampToValueAtTime(380, now + duration);
+    bandpass.Q.setValueAtTime(2.2, now);
+
+    const noiseGain = ctx.createGain();
+    noiseGain.gain.setValueAtTime(0.32, now);
+    noiseGain.gain.exponentialRampToValueAtTime(0.005, now + duration);
+
+    noiseSource.connect(bandpass);
+    bandpass.connect(noiseGain);
+    noiseGain.connect(ctx.destination);
+
+    noiseSource.start(now);
+    noiseSource.stop(now + duration);
+
+    // 2. Chirp / squeak caricaturesco y dinámico de derrape
+    const osc = ctx.createOscillator();
+    const oscGain = ctx.createGain();
+
+    osc.type = "triangle";
+    osc.frequency.setValueAtTime(720, now);
+    osc.frequency.exponentialRampToValueAtTime(220, now + 0.18);
+
+    oscGain.gain.setValueAtTime(0.2, now);
+    oscGain.gain.exponentialRampToValueAtTime(0.005, now + 0.19);
+
+    osc.connect(oscGain);
+    oscGain.connect(ctx.destination);
+
+    osc.start(now);
+    osc.stop(now + 0.2);
   }
 
   public playCollectCarrot(): void {
@@ -173,6 +236,7 @@ class AudioManager {
   }
 
   public playVictory(): void {
+    this.pauseBGM();
     if (!useGameStore.getState().soundEnabled) return;
     const ctx = this.getContext();
     if (!ctx) return;
@@ -206,6 +270,7 @@ class AudioManager {
   }
 
   public playGameOver(): void {
+    this.pauseBGM();
     if (!useGameStore.getState().soundEnabled) return;
     const ctx = this.getContext();
     if (!ctx) return;
@@ -232,58 +297,104 @@ class AudioManager {
     });
   }
 
+  /**
+   * Inicializa la integración con el SoundManager de Phaser según las mejores prácticas
+   * de la skill phaser-audio-and-sound (AudioContext desbloqueado, bucle WebAudio gapless y pauseOnBlur).
+   */
+  public initPhaserSound(sound: Phaser.Sound.BaseSoundManager): void {
+    this.soundManager = sound;
+
+    // Crear o recuperar la instancia retenida de sonido para control continuo
+    if (!this.bgmSound && this.soundManager) {
+      const existing = this.soundManager.get('bg_music_world_1');
+      if (existing) {
+        this.bgmSound = existing;
+      } else {
+        this.bgmSound = this.soundManager.add('bg_music_world_1', {
+          loop: true,
+          volume: 0.45,
+        });
+      }
+    }
+
+    // Detener cualquier fallback HTML5 previo para evitar sonidos duplicados
+    if (this.bgmAudio) {
+      this.bgmAudio.pause();
+      this.bgmAudio.currentTime = 0;
+    }
+
+    // Sincronizar estado actual
+    this.syncMusic();
+  }
+
+  private getBGMAudio(): HTMLAudioElement | null {
+    if (typeof Audio === 'undefined') return null;
+    if (!this.bgmAudio) {
+      this.bgmAudio = new Audio(this.bgmSrc);
+      this.bgmAudio.loop = true;
+      this.bgmAudio.volume = 0.45;
+      this.bgmAudio.preload = 'auto';
+    }
+    return this.bgmAudio;
+  }
+
   public startBGM(): void {
-    if (this.bgmPlaying || !useGameStore.getState().musicEnabled) return;
-    const ctx = this.getContext();
-    if (!ctx) return;
-
+    if (!useGameStore.getState().musicEnabled) return;
     this.bgmPlaying = true;
-    // Cheerful cartoon melody pattern in C Major (Sunny Meadow theme)
-    // C, E, G, A, G, E, D, C, etc.
-    const melody = [
-      523.25, 659.25, 783.99, 880.0, 783.99, 659.25, 587.33, 523.25,
-      659.25, 783.99, 1046.5, 880.0, 783.99, 659.25, 587.33, 523.25
-    ];
-    let noteIndex = 0;
 
-    const playNextNote = () => {
-      if (!this.bgmPlaying || !useGameStore.getState().musicEnabled) {
-        this.stopBGM();
+    // 1. Usar el SoundManager de Phaser si está disponible (WebAudio gapless loop + auto unlock)
+    if (this.soundManager && this.bgmSound) {
+      if (this.bgmSound.isPaused) {
+        this.bgmSound.resume();
         return;
       }
-      const currentCtx = this.getContext();
-      if (!currentCtx) return;
 
-      const now = currentCtx.currentTime;
-      const freq = melody[noteIndex % melody.length];
-      noteIndex++;
+      if (!this.bgmSound.isPlaying) {
+        if (this.soundManager.locked) {
+          // Práctica recomendada de phaser-audio-and-sound: esperar el evento 'unlocked'
+          this.soundManager.once('unlocked', () => {
+            if (this.bgmPlaying && useGameStore.getState().musicEnabled) {
+              this.bgmSound?.play();
+            }
+          });
+        } else {
+          this.bgmSound.play();
+        }
+      }
+      return;
+    }
 
-      // Soft marimba-like tone
-      const osc = currentCtx.createOscillator();
-      const gain = currentCtx.createGain();
+    // 2. Fallback HTML5 Audio en caso de que Phaser aún esté inicializándose
+    const audio = this.getBGMAudio();
+    if (!audio) return;
 
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(freq, now);
+    audio.loop = true;
+    const playPromise = audio.play();
+    if (playPromise !== undefined) {
+      playPromise.catch((err) => {
+        console.warn('BGM play esperando interacción del usuario:', err);
+      });
+    }
+  }
 
-      gain.gain.setValueAtTime(0.08, now);
-      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.26);
-
-      osc.connect(gain);
-      gain.connect(currentCtx.destination);
-
-      osc.start(now);
-      osc.stop(now + 0.28);
-    };
-
-    // 160 BPM eighth notes => approx 187ms per note
-    this.bgmInterval = window.setInterval(playNextNote, 220);
+  public pauseBGM(): void {
+    this.bgmPlaying = false;
+    if (this.bgmSound && this.bgmSound.isPlaying) {
+      this.bgmSound.pause();
+    }
+    if (this.bgmAudio) {
+      this.bgmAudio.pause();
+    }
   }
 
   public stopBGM(): void {
     this.bgmPlaying = false;
-    if (this.bgmInterval !== null) {
-      clearInterval(this.bgmInterval);
-      this.bgmInterval = null;
+    if (this.bgmSound) {
+      this.bgmSound.stop();
+    }
+    if (this.bgmAudio) {
+      this.bgmAudio.pause();
+      this.bgmAudio.currentTime = 0;
     }
   }
 
@@ -292,7 +403,7 @@ class AudioManager {
     if (musicOn && !this.bgmPlaying) {
       this.startBGM();
     } else if (!musicOn && this.bgmPlaying) {
-      this.stopBGM();
+      this.pauseBGM();
     }
   }
 }

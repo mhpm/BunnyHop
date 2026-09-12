@@ -1,0 +1,120 @@
+{
+  "version": 1,
+  "skills": {
+    "phaser-sprites-and-images": {
+      "version": "1.0.0",
+      "installedAt": "2026-09-12T21:45:36.325Z",
+      "platform": "gemini"
+    },
+    "phaser-v4-new-features": {
+      "version": "1.0.0",
+      "installedAt": "2026-09-12T21:46:30.155Z",
+      "platform": "gemini"
+    },
+    "phaser-animations": {
+      "version": "1.0.0",
+      "installedAt": "2026-09-12T21:48:05.035Z",
+      "platform": "gemini"
+    },
+    "phaser-loading-assets": {
+      "version": "1.0.0",
+      "installedAt": "2026-09-12T21:48:29.704Z",
+      "platform": "gemini"
+    },
+    "phaser-cameras": {
+      "version": "1.0.0",
+      "installedAt": "2026-09-12T21:48:58.482Z",
+      "platform": "gemini"
+    },
+    "phaser-graphics-and-shapes": {
+      "version": "1.0.0",
+      "installedAt": "2026-09-12T21:49:19.921Z",
+      "platform": "gemini"
+    },
+    "phaser-scenes": {
+      "version": "1.0.0",
+      "installedAt": "2026-09-12T21:49:31.761Z",
+      "platform": "gemini"
+    },
+    "phaser-audio-and-sound": {
+      "version": "1.0.0",
+      "installedAt": "2026-09-12T21:49:49.942Z",
+      "platform": "gemini"
+    },
+    "phaser-physics-matter": {
+      "version": "1.0.0",
+      "installedAt": "2026-09-12T21:51:24.348Z",
+      "platform": "gemini"
+    },
+    "phaser-scale-and-responsive": {
+      "version": "1.0.0",
+      "installedAt": "2026-09-12T21:52:17.991Z",
+      "platform": "gemini"
+    },
+    "phaser-physics-arcade": {
+      "version": "1.0.0",
+      "installedAt": "2026-09-12T22:01:40.718Z",
+      "platform": "gemini"
+    },
+    "phaser-tilemaps": {
+      "version": "1.0.0",
+      "installedAt": "2026-09-12T22:11:57.709Z",
+      "platform": "gemini"
+    },
+    "phaser-data-manager": {
+      "version": "1.0.0",
+      "installedAt": "2026-09-12T22:12:02.398Z",
+      "platform": "gemini"
+    },
+    "phaser-render-textures": {
+      "version": "1.0.0",
+      "installedAt": "2026-09-12T22:12:04.613Z",
+      "platform": "gemini"
+    },
+    "phaser-tweens": {
+      "version": "1.0.0",
+      "installedAt": "2026-09-12T22:12:06.633Z",
+      "platform": "gemini"
+    },
+    "phaser-events-system": {
+      "version": "1.0.0",
+      "installedAt": "2026-09-12T22:12:08.547Z",
+      "platform": "gemini"
+    },
+    "phaser-time-and-timers": {
+      "version": "1.0.0",
+      "installedAt": "2026-09-12T22:12:10.478Z",
+      "platform": "gemini"
+    },
+    "phaser-game-setup-and-config": {
+      "version": "1.0.0",
+      "installedAt": "2026-09-12T22:12:12.520Z",
+      "platform": "gemini"
+    },
+    "phaser-particles": {
+      "version": "1.0.0",
+      "installedAt": "2026-09-12T22:12:14.864Z",
+      "platform": "gemini"
+    },
+    "phaser-filters-and-postfx": {
+      "version": "1.0.0",
+      "installedAt": "2026-09-12T22:12:17.027Z",
+      "platform": "gemini"
+    },
+    "phaser-curves-and-paths": {
+      "version": "1.0.0",
+      "installedAt": "2026-09-12T22:12:19.097Z",
+      "platform": "gemini"
+    },
+    "phaser-game-object-components": {
+      "version": "1.0.0",
+      "installedAt": "2026-09-12T22:12:21.123Z",
+      "platform": "gemini"
+    },
+    "phaser-groups-and-containers": {
+      "version": "1.0.0",
+      "installedAt": "2026-09-12T22:12:23.162Z",
+      "platform": "gemini"
+    }
+  }
+}

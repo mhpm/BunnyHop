@@ -106,3 +106,31 @@ describe('Bunny Hop - Level 1 Configuration', () => {
     expect(goldCarrots.length).toBeGreaterThanOrEqual(2);
   });
 });
+
+describe('Bunny Hop - Audio Manager SFX & BGM', () => {
+  it('should have playSkid method that executes safely', async () => {
+    const { audioManager } = await import('../systems/AudioManager');
+    expect(typeof audioManager.playSkid).toBe('function');
+
+    // Should not throw even when sound is disabled or enabled
+    useGameStore.getState().toggleSound();
+    expect(() => audioManager.playSkid()).not.toThrow();
+
+    useGameStore.getState().toggleSound();
+    expect(() => audioManager.playSkid()).not.toThrow();
+  });
+
+  it('should support background music playback and sync lifecycle', async () => {
+    const { audioManager } = await import('../systems/AudioManager');
+    expect(typeof audioManager.startBGM).toBe('function');
+    expect(typeof audioManager.pauseBGM).toBe('function');
+    expect(typeof audioManager.stopBGM).toBe('function');
+    expect(typeof audioManager.syncMusic).toBe('function');
+
+    expect(() => audioManager.startBGM()).not.toThrow();
+    expect(() => audioManager.syncMusic()).not.toThrow();
+    expect(() => audioManager.pauseBGM()).not.toThrow();
+    expect(() => audioManager.stopBGM()).not.toThrow();
+  });
+});
+

@@ -50,6 +50,7 @@ export const App: React.FC = () => {
       resetLevelStats();
       gameScene.scene.restart();
     }
+    audioManager.syncMusic();
     setGameState('PLAYING');
   };
 
@@ -59,11 +60,13 @@ export const App: React.FC = () => {
       resetLevelStats();
       gameScene.scene.restart();
     }
+    audioManager.syncMusic();
     setGameState('PLAYING');
   };
 
   // Handle Resume Game from Pause
   const handleResume = () => {
+    audioManager.syncMusic();
     setGameState('PLAYING');
   };
 
@@ -89,7 +92,10 @@ export const App: React.FC = () => {
       {gameState === 'PLAYING' && (
         <>
           <HUD
-            onPause={() => setGameState('PAUSED')}
+            onPause={() => {
+              audioManager.pauseBGM();
+              setGameState('PAUSED');
+            }}
             onOpenHelp={() => setShowHelp(true)}
           />
           <MobileControls gameScene={gameScene} />

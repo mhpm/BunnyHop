@@ -279,6 +279,16 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       if (desiredDir !== "none" && desiredDir === this.currentMoveDir) {
         this.moveHoldTimer += delta;
       } else if (desiredDir !== "none") {
+        // Derrape al cambiar de dirección bruscamente mientras corría a gran velocidad
+        const wasSprintingFast = this.isRunning && Math.abs(body.velocity.x) > 180;
+        const isReversing =
+          (this.currentMoveDir === "left" && desiredDir === "right") ||
+          (this.currentMoveDir === "right" && desiredDir === "left");
+        if (wasSprintingFast && isReversing && isGrounded) {
+          this.particles.emitDust(this.x, this.y + 30, 5);
+          audioManager.playSkid();
+        }
+
         // Al cambiar de dirección sin haber hecho doble toque en esa nueva dirección, se desactiva el sprint rápido
         if (
           (desiredDir === "left" && !leftJustPressed) ||
@@ -328,19 +338,20 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
             this.dashDirection = this.flipX ? -1 : 1;
             this.currentDashSpeed = this.moveSpeed * this.runSpeedMultiplier;
             this.particles.emitDust(this.x, this.y + 30, 6);
-            audioManager.playJump();
+            audioManager.playSkid();
           } else if (this.runInertiaTimer > 0) {
             // Dash launched during running inertia coast
             this.dashDirection = this.runInertiaDir;
             this.currentDashSpeed = this.runInertiaSpeed;
             this.setFlipX(this.dashDirection < 0);
             this.particles.emitDust(this.x, this.y + 30, 6);
-            audioManager.playJump();
+            audioManager.playSkid();
           } else if (desiredDir !== "none") {
             // Walking dash
             this.dashDirection = desiredDir === "left" ? -1 : 1;
             this.currentDashSpeed = this.moveSpeed;
             this.particles.emitDust(this.x, this.y + 30, 3);
+            audioManager.playSkid();
           } else {
             // Standing still (quieto): crouch dash pose!
             this.dashDirection = this.flipX ? -1 : 1;

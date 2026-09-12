@@ -86,6 +86,12 @@ export class PreloadScene extends Phaser.Scene {
 
     // 5. Load Goal Shrine
     this.load.image("rich_goal", "/assets/environment/goal.png");
+
+    // 6. Load Background Music (Phaser audio pipeline)
+    this.load.audio(
+      "bg_music_world_1",
+      "/assets/music/background_music/bg_music_world_1.mp3",
+    );
   }
 
   public create(): void {

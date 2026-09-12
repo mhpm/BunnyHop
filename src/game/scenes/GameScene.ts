@@ -16,6 +16,7 @@ import {
 import { LevelBuilder } from "../levels/LevelBuilder";
 import { GroundElementId, GROUND_ELEMENTS_MAP } from "../config/groundElements";
 import { useGameStore } from "../../store/gameStore";
+import { audioManager } from "../systems/AudioManager";
 
 export class GameScene extends Phaser.Scene {
   public player!: Player;
@@ -55,6 +56,9 @@ export class GameScene extends Phaser.Scene {
 
     // Initialize particle manager
     this.particles = new ParticleManager(this);
+
+    // Initialize Audio via Phaser SoundManager (phaser-audio-and-sound pattern)
+    audioManager.initPhaserSound(this.sound);
 
     // Build Parallax Layers
     this.createParallaxBackground();
