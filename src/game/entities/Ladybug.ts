@@ -4,27 +4,20 @@ import { ParticleManager } from '../systems/ParticleManager';
 
 export class Ladybug extends Enemy {
   constructor(scene: Phaser.Scene, x: number, y: number, particles: ParticleManager) {
-    super(scene, x, y, 'rich_ladybug_walk', particles);
+    super(scene, x, y, 'enemy_ladybug_0', particles);
     this.patrolSpeed = 46;
     this.scoreValue = 100;
     this.health = 1;
 
     this.setSize(44, 30);
-    this.setOffset(5, 8);
-
-    // Subtle gentle bobbing walk
-    scene.tweens.add({
-      targets: this,
-      scaleY: 0.92,
-      duration: 160,
-      yoyo: true,
-      repeat: -1,
-    });
+    this.setOffset(2, 10);
+    this.play('enemy_ladybug_walk');
   }
 
   protected playSquashVisual(): void {
-    this.setTexture('rich_ladybug_squash');
-    this.setSize(50, 16);
+    this.stop();
+    this.setTexture('enemy_ladybug_squash');
+    this.setSize(48, 16);
 
     this.scene.tweens.add({
       targets: this,

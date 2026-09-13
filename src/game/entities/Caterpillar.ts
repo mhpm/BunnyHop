@@ -4,29 +4,20 @@ import { ParticleManager } from '../systems/ParticleManager';
 
 export class Caterpillar extends Enemy {
   constructor(scene: Phaser.Scene, x: number, y: number, particles: ParticleManager) {
-    super(scene, x, y, 'rich_caterpillar_walk', particles);
+    super(scene, x, y, 'enemy_caterpillar_0', particles);
     this.patrolSpeed = 32;
     this.scoreValue = 120;
     this.health = 1;
 
-    this.setSize(52, 28);
-    this.setOffset(4, 10);
-
-    // Cute crawl undulation
-    scene.tweens.add({
-      targets: this,
-      scaleX: 1.08,
-      scaleY: 0.94,
-      duration: 220,
-      yoyo: true,
-      repeat: -1,
-      ease: 'Sine.easeInOut',
-    });
+    this.setSize(48, 28);
+    this.setOffset(2, 10);
+    this.play('enemy_caterpillar_walk');
   }
 
   protected playSquashVisual(): void {
-    this.setTexture('rich_caterpillar_squash');
-    this.setSize(56, 16);
+    this.stop();
+    this.setTexture('enemy_caterpillar_squash');
+    this.setSize(48, 16);
 
     this.scene.tweens.add({
       targets: this,

@@ -1002,5 +1002,40 @@ export class AssetGenerator {
       ctx.closePath();
       ctx.fill();
     });
+
+    // 4. Wooden Breakable Crate (rich_box)
+    this.makeCanvas(scene, 'rich_box', 48, 48, (ctx) => {
+      // Wood base
+      ctx.fillStyle = '#A1887F';
+      ctx.fillRect(0, 0, 48, 48);
+      ctx.fillStyle = '#8D6E63';
+      ctx.fillRect(3, 3, 42, 42);
+
+      // Inner bevel
+      ctx.fillStyle = '#6D4C41';
+      ctx.fillRect(6, 6, 36, 36);
+
+      // Cross planks
+      ctx.strokeStyle = '#8D6E63';
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.moveTo(6, 6);
+      ctx.lineTo(42, 42);
+      ctx.moveTo(42, 6);
+      ctx.lineTo(6, 42);
+      ctx.stroke();
+
+      // Border frame
+      ctx.strokeStyle = '#4E342E';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(1, 1, 46, 46);
+
+      // Corner rivets
+      ctx.fillStyle = '#3E2723';
+      ctx.fillRect(4, 4, 3, 3);
+      ctx.fillRect(41, 4, 3, 3);
+      ctx.fillRect(4, 41, 3, 3);
+      ctx.fillRect(41, 41, 3, 3);
+    });
   }
 }

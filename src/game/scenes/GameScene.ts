@@ -40,6 +40,12 @@ export class GameScene extends Phaser.Scene {
     super({ key: "GameScene" });
   }
 
+  public init(): void {
+    this.enemies = [];
+    this.carrots = [];
+    this.goalShrine = undefined;
+  }
+
   public create(): void {
     const config = this.currentLevelConfig;
 
@@ -93,17 +99,36 @@ export class GameScene extends Phaser.Scene {
     // Collisions and Overlaps
     this.setupCollisions();
 
-    // Camera Configuration
+    // Camera Configuration (phaser-cameras deadzone)
     this.setupCamera(config);
 
     // Keyboard shortcuts (e.g. ESC for pause)
-    this.input.keyboard?.on("keydown-ESC", () => {
+    const onEsc = () => {
       const state = useGameStore.getState().gameState;
       if (state === "PLAYING") {
         useGameStore.getState().setGameState("PAUSED");
       } else if (state === "PAUSED") {
         useGameStore.getState().setGameState("PLAYING");
       }
+    };
+    this.input.keyboard?.on("keydown-ESC", onEsc);
+
+    // Responsive scaling listener
+    const onResize = (gameSize: Phaser.Structs.Size) => {
+      this.cameras.main.setBounds(
+        0,
+        0,
+        config.width,
+        Math.max(config.height, gameSize.height),
+      );
+      this.updateBackgroundSize();
+    };
+    this.scale.on("resize", onResize, this);
+
+    // Cleanup listeners on SHUTDOWN to prevent memory leaks across scene restarts (phaser-scenes standard)
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      this.scale.off("resize", onResize, this);
+      this.input.keyboard?.off("keydown-ESC", onEsc);
     });
   }
 
@@ -354,16 +379,7 @@ export class GameScene extends Phaser.Scene {
       Math.max(config.height, this.scale.height),
     );
     cam.startFollow(this.player, true, 0.08, 0.08, 0, 40);
-
-    this.scale.on("resize", (gameSize: Phaser.Structs.Size) => {
-      cam.setBounds(
-        0,
-        0,
-        config.width,
-        Math.max(config.height, gameSize.height),
-      );
-      this.updateBackgroundSize();
-    });
+    cam.setDeadzone(100, 60);
   }
 
   public update(time: number, delta: number): void {

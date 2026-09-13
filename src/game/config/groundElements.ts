@@ -57,7 +57,7 @@ export const GROUND_ELEMENTS_MAP: Record<string, GroundElementMeta> = {
     height: 126,
     category: "chunk",
     description: "Bloque de tierra y roca",
-    hitbox: { width: 121, height: 88, offsetX: 8, offsetY: 18 },
+    hitbox: { width: 121, height: 88, offsetX: 8, offsetY: 25 },
   },
   ground_011: {
     id: "ground_011",
@@ -111,7 +111,7 @@ export const GROUND_ELEMENTS_MAP: Record<string, GroundElementMeta> = {
     height: 125,
     category: "chunk",
     description: "Bloque de tierra y roca",
-    hitbox: { width: 150, height: 87, offsetX: 10, offsetY: 18 },
+    hitbox: { width: 150, height: 50, offsetX: 10, offsetY: 18 },
   },
   ground_020: {
     id: "ground_020",
@@ -120,7 +120,7 @@ export const GROUND_ELEMENTS_MAP: Record<string, GroundElementMeta> = {
     height: 125,
     category: "chunk",
     description: "Bloque de tierra y roca",
-    hitbox: { width: 144, height: 87, offsetX: 10, offsetY: 18 },
+    hitbox: { width: 144, height: 50, offsetX: 10, offsetY: 18 },
   },
   ground_021: {
     id: "ground_021",
@@ -291,7 +291,7 @@ export const GROUND_ELEMENTS_MAP: Record<string, GroundElementMeta> = {
     height: 95,
     category: "island",
     description: "Isla flotante / plataforma de césped",
-    hitbox: { width: 117, height: 30, offsetX: 6, offsetY: 55 },
+    hitbox: { width: 118, height: 70, offsetX: 6, offsetY: 20 },
   },
   ground_040: {
     id: "ground_040",
@@ -300,7 +300,7 @@ export const GROUND_ELEMENTS_MAP: Record<string, GroundElementMeta> = {
     height: 93,
     category: "tile",
     description: "Bloque de suelo horizontal",
-    hitbox: { width: 193, height: 30, offsetX: 8, offsetY: 50 },
+    hitbox: { width: 198, height: 38, offsetX: 6, offsetY: 50 },
   },
   ground_041: {
     id: "ground_041",
@@ -309,7 +309,7 @@ export const GROUND_ELEMENTS_MAP: Record<string, GroundElementMeta> = {
     height: 90,
     category: "island",
     description: "Isla flotante / plataforma de césped",
-    hitbox: { width: 85, height: 30, offsetX: 5, offsetY: 40 },
+    hitbox: { width: 86, height: 66, offsetX: 4, offsetY: 19 },
   },
   ground_042: {
     id: "ground_042",
@@ -318,7 +318,7 @@ export const GROUND_ELEMENTS_MAP: Record<string, GroundElementMeta> = {
     height: 90,
     category: "island",
     description: "Isla flotante / plataforma de césped",
-    hitbox: { width: 106, height: 30, offsetX: 6, offsetY: 40 },
+    hitbox: { width: 108, height: 53, offsetX: 5, offsetY: 34 },
   },
   ground_043: {
     id: "ground_043",
@@ -327,7 +327,7 @@ export const GROUND_ELEMENTS_MAP: Record<string, GroundElementMeta> = {
     height: 88,
     category: "island",
     description: "Isla flotante / plataforma de césped",
-    hitbox: { width: 164, height: 30, offsetX: 9, offsetY: 45 },
+    hitbox: { width: 168, height: 58, offsetX: 7, offsetY: 26 },
   },
   ground_044: {
     id: "ground_044",
@@ -336,7 +336,7 @@ export const GROUND_ELEMENTS_MAP: Record<string, GroundElementMeta> = {
     height: 87,
     category: "island",
     description: "Isla flotante con flor (rich_platform)",
-    hitbox: { width: 140, height: 30, offsetX: 6, offsetY: 45 },
+    hitbox: { width: 140, height: 46, offsetX: 6, offsetY: 36 },
   },
   ground_045: {
     id: "ground_045",
@@ -345,7 +345,7 @@ export const GROUND_ELEMENTS_MAP: Record<string, GroundElementMeta> = {
     height: 87,
     category: "island",
     description: "Isla flotante / plataforma de césped",
-    hitbox: { width: 168, height: 30, offsetX: 9, offsetY: 45 },
+    hitbox: { width: 172, height: 64, offsetX: 7, offsetY: 19 },
   },
   ground_046: {
     id: "ground_046",
@@ -354,7 +354,7 @@ export const GROUND_ELEMENTS_MAP: Record<string, GroundElementMeta> = {
     height: 86,
     category: "island",
     description: "Isla flotante / plataforma de césped",
-    hitbox: { width: 117, height: 30, offsetX: 7, offsetY: 45 },
+    hitbox: { width: 120, height: 61, offsetX: 5, offsetY: 21 },
   },
   ground_047: {
     id: "ground_047",
@@ -363,7 +363,7 @@ export const GROUND_ELEMENTS_MAP: Record<string, GroundElementMeta> = {
     height: 83,
     category: "tile",
     description: "Bloque de suelo horizontal",
-    hitbox: { width: 195, height: 23, offsetX: 8, offsetY: 45 },
+    hitbox: { width: 196, height: 55, offsetX: 8, offsetY: 25 },
   },
   ground_048: {
     id: "ground_048",
@@ -471,7 +471,7 @@ export const GROUND_ELEMENTS_MAP: Record<string, GroundElementMeta> = {
     height: 124,
     category: "tile",
     description: "Bloque de suelo horizontal",
-    hitbox: { width: 220, height: 60, offsetX: 10, offsetY: 60 },
+    hitbox: { width: 240, height: 90, offsetX: 0, offsetY: 34 },
   },
   ground_100: {
     id: "ground_100",
@@ -480,7 +480,7 @@ export const GROUND_ELEMENTS_MAP: Record<string, GroundElementMeta> = {
     height: 111,
     category: "tile",
     description: "Bloque de suelo horizontal",
-    hitbox: { width: 220, height: 72, offsetX: 10, offsetY: 40 },
+    hitbox: { width: 240, height: 86, offsetX: 0, offsetY: 44 },
   },
   ground_101: {
     id: "ground_101",
@@ -489,7 +489,7 @@ export const GROUND_ELEMENTS_MAP: Record<string, GroundElementMeta> = {
     height: 111,
     category: "tile",
     description: "Bloque de suelo horizontal",
-    hitbox: { width: 227, height: 72, offsetX: 10, offsetY: 45 },
+    hitbox: { width: 247, height: 78, offsetX: 0, offsetY: 32 },
   },
   ground_102: {
     id: "ground_102",
@@ -498,7 +498,7 @@ export const GROUND_ELEMENTS_MAP: Record<string, GroundElementMeta> = {
     height: 110,
     category: "tile",
     description: "Bloque de suelo horizontal",
-    hitbox: { width: 215, height: 71, offsetX: 9, offsetY: 40 },
+    hitbox: { width: 234, height: 83, offsetX: 0, offsetY: 26 },
   },
   ground_103: {
     id: "ground_103",
@@ -507,7 +507,7 @@ export const GROUND_ELEMENTS_MAP: Record<string, GroundElementMeta> = {
     height: 103,
     category: "tile",
     description: "Bloque de suelo horizontal",
-    hitbox: { width: 224, height: 71, offsetX: 10, offsetY: 40 },
+    hitbox: { width: 244, height: 87, offsetX: 0, offsetY: 15 },
   },
   ground_104: {
     id: "ground_104",
@@ -516,7 +516,7 @@ export const GROUND_ELEMENTS_MAP: Record<string, GroundElementMeta> = {
     height: 95,
     category: "tile",
     description: "Bloque de suelo estándar (ground_tile)",
-    hitbox: { width: 225, height: 65, offsetX: 10, offsetY: 20 },
+    hitbox: { width: 245, height: 80, offsetX: 0, offsetY: 20 },
   },
 };
 

@@ -21,10 +21,8 @@ export class GoalShrine extends Phaser.Physics.Arcade.Sprite {
     const hitWidth = 100;
     const hitHeight = 130;
     const staticBody = this.body as Phaser.Physics.Arcade.StaticBody;
-    staticBody.width = hitWidth;
-    staticBody.height = hitHeight;
-    staticBody.position.x = x - hitWidth / 2;
-    staticBody.position.y = y - hitHeight;
+    staticBody.setSize(hitWidth, hitHeight, false);
+    staticBody.setOffset(this.displayWidth / 2 - hitWidth / 2, this.displayHeight - hitHeight);
 
     // Glowing aura / floating sparkle
     scene.tweens.add({
@@ -41,6 +39,8 @@ export class GoalShrine extends Phaser.Physics.Arcade.Sprite {
   public activate(): void {
     if (this.reached) return;
     this.reached = true;
+
+    this.scene.tweens.killTweensOf(this);
 
     // Victory particle explosion
     this.particles.emitStars(this.x, this.y - 70, 24, 0xffd700);

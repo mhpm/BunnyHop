@@ -87,7 +87,7 @@ export class LevelBuilder {
 
     for (let i = 0; i < count; i++) {
       const tileX = x + i * (tileW - overlap) + tileW / 2;
-      const tileY = y + tileH / 2 + LevelBuilder.TILE_Y_OFFSET;
+      const tileY = y + tileH / 2 - hb.offsetY;
 
       const tile = platforms.create(
         tileX,
@@ -96,13 +96,12 @@ export class LevelBuilder {
       ) as Phaser.Physics.Arcade.Sprite;
       tile.setDepth(0);
 
-      // Calibración de la hitbox física sin deformar el sprite visual
+      // Calibración de la hitbox física sin deformar el sprite visual:
+      // Se utiliza setSize y setOffset que actualizan automáticamente el RTree de Arcade Physics.
+      // Cubre el paso completo entre bloques (tileW) garantizando una superficie continua sin grietas.
       const staticBody = tile.body as Phaser.Physics.Arcade.StaticBody;
-      staticBody.width = hb.width;
-      staticBody.height = hb.height;
-      staticBody.offset.set(hb.offsetX, hb.offsetY);
-      staticBody.position.x = tile.x - tile.displayOriginX + hb.offsetX;
-      staticBody.position.y = tile.y - tile.displayOriginY + hb.offsetY;
+      staticBody.setSize(tileW, hb.height, false);
+      staticBody.setOffset(0, hb.offsetY);
 
       createdTiles.push(tile);
     }
@@ -136,11 +135,8 @@ export class LevelBuilder {
     const bh = customHeight ?? hb.height;
 
     const staticBody = platform.body as Phaser.Physics.Arcade.StaticBody;
-    staticBody.width = bw;
-    staticBody.height = bh;
-    staticBody.offset.set(hb.offsetX, hb.offsetY);
-    staticBody.position.x = platform.x - platform.displayOriginX + hb.offsetX;
-    staticBody.position.y = platform.y - platform.displayOriginY + hb.offsetY;
+    staticBody.setSize(bw, bh, false);
+    staticBody.setOffset(hb.offsetX, hb.offsetY);
     platform.setDepth(0);
 
     return platform;
@@ -179,15 +175,15 @@ export class LevelBuilder {
       const hb = meta.hitbox;
       const bw = (config.hitbox?.width ?? hb.width) * scale;
       const bh = (config.hitbox?.height ?? hb.height) * scale;
-      const ox = (config.hitbox?.offsetX ?? hb.offsetX) * scale;
+      const rawOx = config.flipX
+        ? meta.width - (config.hitbox?.offsetX ?? hb.offsetX) - (config.hitbox?.width ?? hb.width)
+        : (config.hitbox?.offsetX ?? hb.offsetX);
+      const ox = rawOx * scale;
       const oy = (config.hitbox?.offsetY ?? hb.offsetY) * scale;
 
       const staticBody = sprite.body as Phaser.Physics.Arcade.StaticBody;
-      staticBody.width = bw;
-      staticBody.height = bh;
-      staticBody.offset.set(ox, oy);
-      staticBody.position.x = sprite.x - sprite.displayOriginX + ox;
-      staticBody.position.y = sprite.y - sprite.displayOriginY + oy;
+      staticBody.setSize(bw, bh, false);
+      staticBody.setOffset(ox, oy);
 
       return sprite;
     } else {
@@ -215,8 +211,7 @@ export class LevelBuilder {
     const isSolid = config.isSolid === true;
 
     // Determinamos la altura del suelo en la coordenada X para que descanse en tierra
-    // Se añade un sutil +5px para que la base quede firmemente asentada en el césped sin flotar
-    const groundY = config.y !== undefined ? config.y : (this.getGroundYAt(config.x) + 5);
+    const groundY = config.y !== undefined ? config.y : this.getGroundYAt(config.x);
     const targetY = groundY + (config.offsetY ?? 0);
     const posX = config.x;
 
@@ -238,11 +233,8 @@ export class LevelBuilder {
       const oy = (config.hitbox?.offsetY ?? 0) * scale;
 
       const staticBody = sprite.body as Phaser.Physics.Arcade.StaticBody;
-      staticBody.width = bw;
-      staticBody.height = bh;
-      staticBody.offset.set(ox, oy);
-      staticBody.position.x = sprite.x - sprite.displayOriginX + ox;
-      staticBody.position.y = sprite.y - sprite.displayOriginY + oy;
+      staticBody.setSize(bw, bh, false);
+      staticBody.setOffset(ox, oy);
 
       return sprite;
     } else {

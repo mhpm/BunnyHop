@@ -21,6 +21,7 @@ export class BreakableBox extends Phaser.Physics.Arcade.Sprite {
     if (this._isDestroyed) return;
     this._isDestroyed = true;
 
+    this.scene.tweens.killTweensOf(this);
     audioManager.playBoxBreak();
     this.particles.emitWoodSplinters(this.x, this.y);
     useGameStore.getState().addScore(50);

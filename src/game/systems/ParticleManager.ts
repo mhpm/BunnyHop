@@ -2,13 +2,59 @@ import Phaser from 'phaser';
 
 export class ParticleManager {
   private scene: Phaser.Scene;
+  private dustEmitter?: Phaser.GameObjects.Particles.ParticleEmitter;
+  private starEmitter?: Phaser.GameObjects.Particles.ParticleEmitter;
+  private woodEmitter?: Phaser.GameObjects.Particles.ParticleEmitter;
 
   constructor(scene: Phaser.Scene) {
     this.scene = scene;
+    this.initEmitters();
+  }
+
+  private initEmitters(): void {
+    if (!this.scene.add?.particles || !this.scene.textures?.exists('particle_dust')) return;
+
+    try {
+      this.dustEmitter = this.scene.add.particles(0, 0, 'particle_dust', {
+        speed: { min: 15, max: 50 },
+        lifespan: { min: 250, max: 400 },
+        scale: { start: 0.75, end: 0.1 },
+        alpha: { start: 0.85, end: 0 },
+        emitting: false,
+      });
+      this.dustEmitter.setDepth(15);
+
+      this.starEmitter = this.scene.add.particles(0, 0, 'particle_star', {
+        speed: { min: 30, max: 75 },
+        lifespan: { min: 350, max: 500 },
+        scale: { start: 0.9, end: 0.2 },
+        alpha: { start: 1, end: 0 },
+        emitting: false,
+      });
+      this.starEmitter.setDepth(25);
+
+      this.woodEmitter = this.scene.add.particles(0, 0, 'particle_wood', {
+        speed: { min: 40, max: 95 },
+        gravityY: 150,
+        lifespan: { min: 350, max: 500 },
+        scale: { start: 1.0, end: 0.3 },
+        alpha: { start: 1, end: 0 },
+        rotate: { start: -180, end: 180 },
+        emitting: false,
+      });
+      this.woodEmitter.setDepth(15);
+    } catch {
+      // Fallback para entornos headless / unit tests
+    }
   }
 
   // Cute dust puff when jumping or landing
   public emitDust(x: number, y: number, count = 4): void {
+    if (this.dustEmitter) {
+      this.dustEmitter.explode(count, x, y);
+      return;
+    }
+
     for (let i = 0; i < count; i++) {
       const p = this.scene.add.image(x + (Math.random() - 0.5) * 16, y, 'particle_dust');
       p.setScale(Phaser.Math.FloatBetween(0.4, 0.9));
@@ -29,6 +75,12 @@ export class ParticleManager {
 
   // Golden star sparkles for carrots
   public emitStars(x: number, y: number, count = 6, tint = 0xffd700): void {
+    if (this.starEmitter) {
+      this.starEmitter.setParticleTint(tint);
+      this.starEmitter.explode(count, x, y);
+      return;
+    }
+
     for (let i = 0; i < count; i++) {
       const p = this.scene.add.image(x, y, 'particle_star');
       p.setTint(tint);
@@ -79,6 +131,11 @@ export class ParticleManager {
 
   // Wooden splinter explosion
   public emitWoodSplinters(x: number, y: number): void {
+    if (this.woodEmitter) {
+      this.woodEmitter.explode(8, x, y);
+      return;
+    }
+
     for (let i = 0; i < 8; i++) {
       const p = this.scene.add.image(x, y, 'particle_wood');
       p.setScale(Phaser.Math.FloatBetween(0.6, 1.2));

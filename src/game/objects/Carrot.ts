@@ -66,6 +66,9 @@ export class Carrot extends Phaser.Physics.Arcade.Sprite {
 
     const baseScale = this.isGold ? 0.48 : 1.0;
 
+    // Detener tweens previos de flotación para evitar conflictos (phaser-tweens)
+    this.scene.tweens.killTweensOf(this);
+
     // Floating collect animation
     this.scene.tweens.add({
       targets: this,

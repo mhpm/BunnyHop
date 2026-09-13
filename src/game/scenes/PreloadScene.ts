@@ -157,5 +157,31 @@ export class PreloadScene extends Phaser.Scene {
       frameRate: 6,
       repeat: -1,
     });
+
+    // Enemy Walking Animations (phaser-animations standard)
+    this.anims.create({
+      key: "enemy_ladybug_walk",
+      frames: [{ key: "enemy_ladybug_0" }, { key: "enemy_ladybug_1" }],
+      frameRate: 6,
+      repeat: -1,
+    });
+    this.anims.create({
+      key: "enemy_caterpillar_walk",
+      frames: [{ key: "enemy_caterpillar_0" }, { key: "enemy_caterpillar_1" }],
+      frameRate: 4,
+      repeat: -1,
+    });
+    this.anims.create({
+      key: "enemy_snail_walk",
+      frames: [{ key: "enemy_snail_0" }, { key: "enemy_snail_1" }],
+      frameRate: 3,
+      repeat: -1,
+    });
+    this.anims.create({
+      key: "enemy_beetle_walk",
+      frames: [{ key: "enemy_beetle_0" }, { key: "enemy_beetle_1" }],
+      frameRate: 6,
+      repeat: -1,
+    });
   }
 }
