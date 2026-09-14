@@ -20,23 +20,28 @@ export const App: React.FC = () => {
 
   // Initialize Phaser Game instance
   useEffect(() => {
+    let sceneTimer: ReturnType<typeof setTimeout> | undefined;
+    let disposed = false;
     if (!gameRef.current) {
       const game = new Phaser.Game(phaserGameConfig);
       gameRef.current = game;
 
       // Poll until GameScene is active and ready
       const checkScene = () => {
+        if (disposed) return;
         const scene = game.scene.getScene('GameScene') as GameScene;
         if (scene) {
           setGameScene(scene);
         } else {
-          setTimeout(checkScene, 100);
+          sceneTimer = setTimeout(checkScene, 100);
         }
       };
       checkScene();
     }
 
     return () => {
+      disposed = true;
+      clearTimeout(sceneTimer);
       if (gameRef.current) {
         gameRef.current.destroy(true);
         gameRef.current = null;

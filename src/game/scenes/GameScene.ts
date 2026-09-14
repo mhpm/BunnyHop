@@ -412,7 +412,8 @@ export class GameScene extends Phaser.Scene {
       // Pit death check
       if (
         this.player.y > this.currentLevelConfig.height + 40 &&
-        !this.player.isDead
+        !this.player.isDead &&
+        !this.player.isVictorious
       ) {
         this.player.die();
       }

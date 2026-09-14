@@ -42,11 +42,13 @@ html, body {
 }
 
 .game-wrapper {
+  --game-width: 100dvw;
+  --game-height: 100dvh;
   position: relative;
-  width: 100vw;
-  height: 100vh;
-  max-width: 100%;
-  max-height: 100%;
+  width: var(--game-width);
+  height: var(--game-height);
+  flex-shrink: 0;
+  container-type: size;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -68,6 +70,18 @@ html, body {
 
 .canvas-container canvas {
   display: block;
+}
+
+/* Rotate the entire game, including React menus and touch controls. */
+@media (orientation: portrait) {
+  .game-wrapper {
+    --game-width: 100dvh;
+    --game-height: 100dvw;
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%) rotate(90deg);
+  }
 }
 
 /* ----------------------------------------------------
@@ -232,7 +246,7 @@ html, body {
   text-align: center;
   max-width: 420px;
   width: 100%;
-  max-height: calc(100vh - 24px);
+  max-height: calc(var(--game-height) - 24px);
   overflow-y: auto;
   box-sizing: border-box;
 }
@@ -742,7 +756,7 @@ html, body {
 /* ----------------------------------------------------
    RESPONSIVE COMPACT / LANDSCAPE MOBILE MODALS
    ---------------------------------------------------- */
-@media (max-height: 520px) {
+@container (max-height: 520px) {
   .menu-overlay,
   .modal-overlay {
     padding: 8px;
@@ -754,7 +768,7 @@ html, body {
     border-radius: 22px;
     border-width: 3px;
     max-width: 370px;
-    max-height: calc(100vh - 16px);
+    max-height: calc(var(--game-height) - 16px);
   }
 
   .modal-title {
@@ -935,12 +949,12 @@ html, body {
   }
 }
 
-@media (max-width: 480px) {
+@container (max-width: 480px) {
   .menu-card,
   .modal-card {
     padding: 18px 20px;
     border-radius: 22px;
-    max-width: 92vw;
+    max-width: calc(var(--game-width) * 0.92);
   }
 
   .modal-title {

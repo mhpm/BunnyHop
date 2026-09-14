@@ -2,16 +2,21 @@ import Phaser from "phaser";
 import { BootScene } from "../scenes/BootScene";
 import { PreloadScene } from "../scenes/PreloadScene";
 import { GameScene } from "../scenes/GameScene";
+import { configureLandscapeDisplay } from "./landscapeDisplay";
 
 export const phaserGameConfig: Phaser.Types.Core.GameConfig = {
   type: Phaser.AUTO,
   parent: "phaser-container",
   backgroundColor: "#81D4FA",
   scale: {
-    mode: Phaser.Scale.EXPAND,
-    autoCenter: Phaser.Scale.CENTER_BOTH,
+    // The landscape wrapper handles rotation; size from its unrotated bounds.
+    mode: Phaser.Scale.NONE,
+    autoCenter: Phaser.Scale.NO_CENTER,
     width: 1280,
     height: 720,
+  },
+  callbacks: {
+    postBoot: configureLandscapeDisplay,
   },
   physics: {
     default: "arcade",

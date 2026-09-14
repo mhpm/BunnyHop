@@ -11,12 +11,15 @@ export class GoalShrine extends Phaser.Physics.Arcade.Sprite {
     this.particles = particles;
 
     scene.add.existing(this);
-    scene.physics.add.existing(this, true);
 
     const targetScale = 0.12;
     this.setScale(targetScale);
     this.setOrigin(0.5, 1);
     this.setDepth(1);
+
+    // Static bodies keep the transform they had when they were created.
+    // Configure the visible shrine first so its trigger is aligned with it.
+    scene.physics.add.existing(this, true);
 
     const hitWidth = 100;
     const hitHeight = 130;
@@ -46,8 +49,6 @@ export class GoalShrine extends Phaser.Physics.Arcade.Sprite {
     this.particles.emitStars(this.x, this.y - 70, 24, 0xffd700);
     this.particles.emitStars(this.x, this.y - 100, 18, 0xffeb3b);
 
-    this.scene.time.delayedCall(800, () => {
-      useGameStore.getState().completeLevel();
-    });
+    useGameStore.getState().completeLevel();
   }
 }

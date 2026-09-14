@@ -608,7 +608,9 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     this.doubleTapTimer = 0;
     this.lastTapDir = "none";
     this.setHitboxMode("standing");
-    this.setVelocity(0, -220);
+    this.setVelocity(0, 0);
+    this.setAcceleration(0, 0);
+    (this.body as Phaser.Physics.Arcade.Body).setAllowGravity(false);
     audioManager.playVictory();
 
     this.scene.tweens.add({
