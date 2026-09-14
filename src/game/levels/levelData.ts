@@ -150,7 +150,7 @@ export const LEVEL_1_CONFIG: LevelConfig = {
   worldName: "Mundo 1 — Bosque del Viento",
   width: 10500,
   height: 720,
-  spawn: { x: 140, y: 500 },
+  spawn: { x: 4540, y: 500 },
 
   // El ancho de cada tramo coincide con su cobertura visual real, incluido el
   // solapamiento de 10 px entre módulos que aplica LevelBuilder.
@@ -234,7 +234,13 @@ export const LEVEL_1_CONFIG: LevelConfig = {
     { element: "enviroment_021", x: 9380, scale: 0.78, depth: -3 },
     { element: "enviroment_040", x: 9700, scale: 0.5, depth: -1 },
     { element: "enviroment_026", x: 9920, scale: 0.78, depth: 1 },
-    { element: "enviroment_023", x: 10300, scale: 0.78, flipX: true, depth: -3 },
+    {
+      element: "enviroment_023",
+      x: 10300,
+      scale: 0.78,
+      flipX: true,
+      depth: -3,
+    },
   ],
 
   // La cadena de zanahorias marca la ruta segura y dibuja el arco de cada salto.

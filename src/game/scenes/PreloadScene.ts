@@ -77,6 +77,16 @@ export class PreloadScene extends Phaser.Scene {
       frameHeight: 128,
     });
 
+    // Ladybug walk animation: 4 frames (256x256 each)
+    this.load.spritesheet(
+      "enemy_ladybug",
+      "/assets/sprites/enemies/ladybug/ladybug.png",
+      {
+        frameWidth: 256,
+        frameHeight: 256,
+      },
+    );
+
     // 4. Load Parallax Background & Foreground
     this.load.image("game_background", "/assets/background/background.png");
     this.load.image(
@@ -161,8 +171,11 @@ export class PreloadScene extends Phaser.Scene {
     // Enemy Walking Animations (phaser-animations standard)
     this.anims.create({
       key: "enemy_ladybug_walk",
-      frames: [{ key: "enemy_ladybug_0" }, { key: "enemy_ladybug_1" }],
-      frameRate: 6,
+      frames: this.anims.generateFrameNumbers("enemy_ladybug", {
+        start: 0,
+        end: 3,
+      }),
+      frameRate: 8,
       repeat: -1,
     });
     this.anims.create({
