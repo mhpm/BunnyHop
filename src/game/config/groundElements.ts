@@ -291,7 +291,7 @@ export const GROUND_ELEMENTS_MAP: Record<string, GroundElementMeta> = {
     height: 95,
     category: "island",
     description: "Isla flotante / plataforma de césped",
-    hitbox: { width: 118, height: 70, offsetX: 6, offsetY: 20 },
+    hitbox: { width: 118, height: 30, offsetX: 6, offsetY: 46 },
   },
   ground_040: {
     id: "ground_040",
@@ -309,7 +309,7 @@ export const GROUND_ELEMENTS_MAP: Record<string, GroundElementMeta> = {
     height: 90,
     category: "island",
     description: "Isla flotante / plataforma de césped",
-    hitbox: { width: 86, height: 66, offsetX: 4, offsetY: 19 },
+    hitbox: { width: 86, height: 20, offsetX: 4, offsetY: 46 },
   },
   ground_042: {
     id: "ground_042",
@@ -318,7 +318,7 @@ export const GROUND_ELEMENTS_MAP: Record<string, GroundElementMeta> = {
     height: 90,
     category: "island",
     description: "Isla flotante / plataforma de césped",
-    hitbox: { width: 108, height: 53, offsetX: 5, offsetY: 34 },
+    hitbox: { width: 108, height: 20, offsetX: 5, offsetY: 46 },
   },
   ground_043: {
     id: "ground_043",
@@ -327,7 +327,7 @@ export const GROUND_ELEMENTS_MAP: Record<string, GroundElementMeta> = {
     height: 88,
     category: "island",
     description: "Isla flotante / plataforma de césped",
-    hitbox: { width: 168, height: 58, offsetX: 7, offsetY: 26 },
+    hitbox: { width: 168, height: 18, offsetX: 7, offsetY: 46 },
   },
   ground_044: {
     id: "ground_044",

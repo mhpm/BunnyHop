@@ -86,6 +86,10 @@ export class PreloadScene extends Phaser.Scene {
         frameHeight: 256,
       },
     );
+    this.load.image(
+      "enemy_ladybug_dead",
+      "/assets/sprites/enemies/ladybug/ladydie.png",
+    );
 
     // 4. Load Parallax Background & Foreground
     this.load.image("game_background", "/assets/background/background.png");

@@ -3,14 +3,18 @@ import { Enemy } from "./Enemy";
 import { ParticleManager } from "../systems/ParticleManager";
 
 export class Ladybug extends Enemy {
+  private jumpTimer?: Phaser.Time.TimerEvent;
+
   constructor(
     scene: Phaser.Scene,
     x: number,
     y: number,
     particles: ParticleManager,
+    variant: "normal" | "aggressive" = "normal",
   ) {
     super(scene, x, y, "enemy_ladybug", particles);
-    this.patrolSpeed = 46;
+    const isAggressive = variant === "aggressive";
+    this.patrolSpeed = isAggressive ? 82 : 46;
     this.scoreValue = 100;
     this.health = 1;
 
@@ -25,6 +29,16 @@ export class Ladybug extends Enemy {
     // Align the hitbox bottom with the feet of the 256px artwork.
     this.setOffset(2 / visualScale, 12 / visualScale);
     this.play("enemy_ladybug_walk");
+
+    if (isAggressive) {
+      this.jumpTimer = scene.time.addEvent({
+        delay: 1600,
+        startAt: 850,
+        loop: true,
+        callback: this.tryAggressiveJump,
+        callbackScope: this,
+      });
+    }
   }
 
   public override update(): void {
@@ -57,12 +71,24 @@ export class Ladybug extends Enemy {
     return supportBodies.length === 0;
   }
 
+  private tryAggressiveJump(): void {
+    if (!this.active || this.isDefeated || !this.body) return;
+
+    const body = this.body as Phaser.Physics.Arcade.Body;
+    if (body.blocked.down || body.touching.down) {
+      this.setVelocityY(-430);
+    }
+  }
+
   protected playSquashVisual(): void {
+    this.jumpTimer?.remove();
+    this.jumpTimer = undefined;
     this.stop();
-    this.setTexture("enemy_ladybug_squash");
-    this.setScale(1);
-    this.setSize(48, 16);
-    this.setOffset(2, 10);
+    this.setTexture("enemy_ladybug_dead");
+    const visualScale = 0.1975;
+    this.setScale(visualScale);
+    this.setSize(48 / visualScale, 16 / visualScale);
+    this.setOffset(2 / visualScale, 10 / visualScale);
 
     this.scene.tweens.add({
       targets: this,

@@ -96,6 +96,8 @@ export interface EnemyConfig {
   type: "ladybug" | "caterpillar" | "snail" | "beetle";
   x: number;
   y: number;
+  /** Solo aplica a las ladybugs. Las agresivas corren más y saltan. */
+  variant?: "normal" | "aggressive";
 }
 
 export type EnemyType = EnemyConfig["type"];
@@ -150,7 +152,7 @@ export const LEVEL_1_CONFIG: LevelConfig = {
   worldName: "Mundo 1 — Bosque del Viento",
   width: 10500,
   height: 720,
-  spawn: { x: 4540, y: 500 },
+  spawn: { x: 140, y: 500 },
 
   // El ancho de cada tramo coincide con su cobertura visual real, incluido el
   // solapamiento de 10 px entre módulos que aplica LevelBuilder.
@@ -317,10 +319,19 @@ export const LEVEL_1_CONFIG: LevelConfig = {
 
   // La ruta alta permite esquivarlos; pisarlos activa el rebote del conejo.
   enemies: [
+    { type: "ladybug", x: 780, y: 540 },
+    { type: "ladybug", x: 1180, y: 540, variant: "aggressive" },
+    { type: "ladybug", x: 1980, y: 540 },
+    { type: "ladybug", x: 3330, y: 510, variant: "aggressive" },
     { type: "snail", x: 4480, y: 540 },
+    { type: "ladybug", x: 4850, y: 540 },
     { type: "ladybug", x: 5140, y: 540 },
+    { type: "ladybug", x: 6100, y: 540, variant: "aggressive" },
     { type: "caterpillar", x: 7460, y: 540 },
+    { type: "ladybug", x: 7700, y: 540 },
     { type: "beetle", x: 8050, y: 540 },
+    { type: "ladybug", x: 8750, y: 480, variant: "aggressive" },
+    { type: "ladybug", x: 9680, y: 540 },
   ],
 
   boxes: [],

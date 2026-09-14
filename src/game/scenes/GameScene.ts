@@ -221,8 +221,13 @@ export class GameScene extends Phaser.Scene {
     return this.levelBuilder.createBox(x, y);
   }
 
-  public createEnemy(type: EnemyType, x: number, y: number): Enemy {
-    return this.levelBuilder.createEnemy(type, x, y);
+  public createEnemy(
+    type: EnemyType,
+    x: number,
+    y: number,
+    variant?: "normal" | "aggressive",
+  ): Enemy {
+    return this.levelBuilder.createEnemy(type, x, y, variant);
   }
 
   public createProp(
@@ -288,7 +293,9 @@ export class GameScene extends Phaser.Scene {
     config.carrots.forEach((c) => this.createCarrot(c.x, c.y, c.isGold));
 
     // 8. Enemigos
-    config.enemies.forEach((e) => this.createEnemy(e.type, e.x, e.y));
+    config.enemies.forEach((e) =>
+      this.createEnemy(e.type, e.x, e.y, e.variant),
+    );
 
     // 9. Meta final
     if (config.goal) {

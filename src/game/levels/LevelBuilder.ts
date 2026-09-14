@@ -312,13 +312,18 @@ export class LevelBuilder {
    * @param x Posición X inicial.
    * @param y Posición Y inicial.
    */
-  public createEnemy(type: EnemyType, x: number, y: number): Enemy {
+  public createEnemy(
+    type: EnemyType,
+    x: number,
+    y: number,
+    variant?: "normal" | "aggressive",
+  ): Enemy {
     const { scene, enemies, particles } = this.context;
     let enemy: Enemy;
 
     switch (type) {
       case "ladybug":
-        enemy = new Ladybug(scene, x, y, particles);
+        enemy = new Ladybug(scene, x, y, particles, variant);
         break;
       case "caterpillar":
         enemy = new Caterpillar(scene, x, y, particles);
