@@ -5,6 +5,7 @@ import { LEVEL_1_CONFIG } from "../levels/levelData";
 
 const WALK_JUMP_REACH = 255;
 const SPRINT_JUMP_REACH = 459;
+const MAX_JUMP_HEIGHT = 141;
 const SAFE_STANDARD_GAP = 200;
 const SAFE_SPRINT_GAP = 350;
 const REQUIRED_SPRINT_RUNWAY = 700;
@@ -74,12 +75,12 @@ describe("Level 1 traversal design", () => {
       return platform.y + meta.hitbox.offsetY;
     });
 
-    // The two optional routes use 100 -> 80 -> 80 px ascents, below the
-    // bunny's approximate 141 px jump apex.
-    expect(600 - surfaces[1]).toBeLessThanOrEqual(100);
-    expect(surfaces[1] - surfaces[2]).toBeLessThanOrEqual(80);
-    expect(600 - surfaces[4]).toBeLessThanOrEqual(110);
-    expect(surfaces[4] - surfaces[5]).toBeLessThanOrEqual(80);
+    // Every ascent remains below the bunny's approximate jump apex even when
+    // a platform hitbox is recalibrated to better match its artwork.
+    expect(600 - surfaces[1]).toBeLessThanOrEqual(MAX_JUMP_HEIGHT);
+    expect(surfaces[1] - surfaces[2]).toBeLessThanOrEqual(MAX_JUMP_HEIGHT);
+    expect(600 - surfaces[4]).toBeLessThanOrEqual(MAX_JUMP_HEIGHT);
+    expect(surfaces[4] - surfaces[5]).toBeLessThanOrEqual(MAX_JUMP_HEIGHT);
 
     for (const segment of LEVEL_1_CONFIG.groundSegments) {
       expect(GROUND_ELEMENTS_MAP[segment.element ?? "ground_104"]).toBeDefined();

@@ -57,6 +57,14 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   private dashDustTimer = 0;
   private currentHitbox: "standing" | "dash" = "standing";
 
+  // Parámetros de caja de colisión para movimiento terrestre (base de suelo en Y = 175)
+  private readonly bodyWidth = 60;
+  private readonly bodyHeight = 120;
+  private readonly groundOffsetY = 55; // 55 + 120 = 175px (alineado perfecto al suelo)
+  private readonly runOffsetX = 48; // Frame de bunny_run (164px)
+  private readonly walkOffsetX = 40; // Frame de bunny_walk (128px)
+  private readonly idleOffsetX = 40; // Frame de bunny_idle (118px)
+
   /**
    * Obtiene los límites calculados dinámicamente con la función utilitaria reutilizable
    */
@@ -95,8 +103,8 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     } else {
       // Restauramos el anclaje centrado y la caja vertical estándar (60 ancho x 120 alto)
       this.setOrigin(0.5, 0.5);
-      this.setSize(60, 120);
-      this.setOffset(40, 55);
+      this.setSize(this.bodyWidth, this.bodyHeight);
+      this.setOffset(this.idleOffsetX, this.groundOffsetY);
       this.currentHitbox = "standing";
     }
   }
@@ -226,13 +234,17 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
 
       // Detección de pulsación inicial (flanco ascendente / just pressed)
       const leftJustPressed =
-        (this.cursors?.left && Phaser.Input.Keyboard.JustDown(this.cursors.left)) ||
-        (this.wasdKeys?.left && Phaser.Input.Keyboard.JustDown(this.wasdKeys.left)) ||
+        (this.cursors?.left &&
+          Phaser.Input.Keyboard.JustDown(this.cursors.left)) ||
+        (this.wasdKeys?.left &&
+          Phaser.Input.Keyboard.JustDown(this.wasdKeys.left)) ||
         (this.touchLeft && !this.wasTouchLeft);
 
       const rightJustPressed =
-        (this.cursors?.right && Phaser.Input.Keyboard.JustDown(this.cursors.right)) ||
-        (this.wasdKeys?.right && Phaser.Input.Keyboard.JustDown(this.wasdKeys.right)) ||
+        (this.cursors?.right &&
+          Phaser.Input.Keyboard.JustDown(this.cursors.right)) ||
+        (this.wasdKeys?.right &&
+          Phaser.Input.Keyboard.JustDown(this.wasdKeys.right)) ||
         (this.touchRight && !this.wasTouchRight);
 
       this.wasTouchLeft = this.touchLeft;
@@ -280,7 +292,8 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         this.moveHoldTimer += delta;
       } else if (desiredDir !== "none") {
         // Derrape al cambiar de dirección bruscamente mientras corría a gran velocidad
-        const wasSprintingFast = this.isRunning && Math.abs(body.velocity.x) > 180;
+        const wasSprintingFast =
+          this.isRunning && Math.abs(body.velocity.x) > 180;
         const isReversing =
           (this.currentMoveDir === "left" && desiredDir === "right") ||
           (this.currentMoveDir === "right" && desiredDir === "left");
@@ -655,17 +668,26 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       if (this.isRunning || this.runInertiaTimer > 0) {
         this.anims.timeScale = 1;
         this.play("bunny_run_anim", true);
-        this.setOffset(48, 55);
+        const offsetX = this.flipX
+          ? Math.max(0, 164 - this.bodyWidth - this.runOffsetX)
+          : this.runOffsetX;
+        this.setOffset(offsetX, this.groundOffsetY);
       } else {
         this.anims.timeScale = 1;
         this.play("bunny_walk_anim", true);
-        this.setOffset(40, 55);
+        const offsetX = this.flipX
+          ? Math.max(0, 128 - this.bodyWidth - this.walkOffsetX)
+          : this.walkOffsetX;
+        this.setOffset(offsetX, this.groundOffsetY);
       }
     } else {
       // 4. QUIETO (IDLE)
       this.anims.timeScale = 1;
       this.play("bunny_idle_anim", true);
-      this.setOffset(40, 55);
+      const offsetX = this.flipX
+        ? Math.max(0, 118 - this.bodyWidth - this.idleOffsetX)
+        : this.idleOffsetX;
+      this.setOffset(offsetX, this.groundOffsetY);
     }
   }
 }

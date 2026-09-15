@@ -64,7 +64,10 @@ export class GameScene extends Phaser.Scene {
     this.particles = new ParticleManager(this);
 
     // Initialize Audio via Phaser SoundManager (phaser-audio-and-sound pattern)
-    audioManager.initPhaserSound(this.sound);
+    audioManager.initPhaserSound(
+      this.sound,
+      this.cache.audio.exists("bg_music_world_1"),
+    );
 
     // Build Parallax Layers
     this.createParallaxBackground();

@@ -85,10 +85,10 @@ export class Ladybug extends Enemy {
     this.jumpTimer = undefined;
     this.stop();
     this.setTexture("enemy_ladybug_dead");
-    const visualScale = 0.1975;
+    const visualScale = 0.2275;
     this.setScale(visualScale);
     this.setSize(48 / visualScale, 16 / visualScale);
-    this.setOffset(2 / visualScale, 10 / visualScale);
+    this.setOffset(2 / visualScale, 50 / visualScale);
 
     this.scene.tweens.add({
       targets: this,

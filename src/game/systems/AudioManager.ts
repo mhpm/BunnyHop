@@ -15,6 +15,10 @@ class AudioManager {
   }
 
   private getContext(): AudioContext | null {
+    if (this.ctx?.state === 'closed') {
+      this.ctx = null;
+    }
+
     if (!this.ctx) {
       if (typeof window === "undefined") return null;
       const AudioContextClass = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
@@ -23,7 +27,9 @@ class AudioManager {
       }
     }
     if (this.ctx && this.ctx.state === 'suspended') {
-      this.ctx.resume();
+      void this.ctx.resume().catch(() => {
+        // A page reload can close the old context while its resume is pending.
+      });
     }
     return this.ctx;
   }
@@ -301,11 +307,18 @@ class AudioManager {
    * Inicializa la integración con el SoundManager de Phaser según las mejores prácticas
    * de la skill phaser-audio-and-sound (AudioContext desbloqueado, bucle WebAudio gapless y pauseOnBlur).
    */
-  public initPhaserSound(sound: Phaser.Sound.BaseSoundManager): void {
+  public initPhaserSound(
+    sound: Phaser.Sound.BaseSoundManager,
+    hasBgmAsset = true,
+  ): void {
+    if (this.soundManager !== sound) {
+      this.bgmSound = null;
+    }
+
     this.soundManager = sound;
 
     // Crear o recuperar la instancia retenida de sonido para control continuo
-    if (!this.bgmSound && this.soundManager) {
+    if (hasBgmAsset && !this.bgmSound) {
       const existing = this.soundManager.get('bg_music_world_1');
       if (existing) {
         this.bgmSound = existing;
