@@ -125,12 +125,15 @@ describe('Bunny Hop - Audio Manager SFX & BGM', () => {
     expect(typeof audioManager.startBGM).toBe('function');
     expect(typeof audioManager.pauseBGM).toBe('function');
     expect(typeof audioManager.stopBGM).toBe('function');
+    expect(typeof audioManager.startMainTitleMusic).toBe('function');
+    expect(typeof audioManager.stopMainTitleMusic).toBe('function');
     expect(typeof audioManager.syncMusic).toBe('function');
 
     expect(() => audioManager.startBGM()).not.toThrow();
+    expect(() => audioManager.startMainTitleMusic()).not.toThrow();
     expect(() => audioManager.syncMusic()).not.toThrow();
     expect(() => audioManager.pauseBGM()).not.toThrow();
     expect(() => audioManager.stopBGM()).not.toThrow();
+    expect(() => audioManager.stopMainTitleMusic()).not.toThrow();
   });
 });
-

@@ -19,7 +19,6 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onOpenHelp }) =
 
   const handleStart = () => {
     audioManager.playJump();
-    audioManager.syncMusic();
     onStartGame();
   };
 
@@ -29,64 +28,57 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onOpenHelp }) =
   };
 
   return (
-    <div className="menu-overlay">
-      <div className="menu-card animate-pop-in">
-        {/* Animated Bunny Mascot */}
-        <div className="mascot-container">
-          <div className="mascot-bunny">🐰</div>
-          <div className="mascot-carrot">🥕</div>
-        </div>
+    <div className="menu-overlay main-menu-screen">
+      <div className="main-menu-toolbar" aria-label="Opciones del menú">
+        <button
+          type="button"
+          onClick={toggleSound}
+          className={`btn-icon main-menu-icon ${!soundEnabled ? 'btn-disabled' : ''}`}
+          title="Efectos de Sonido"
+          aria-label={soundEnabled ? 'Silenciar efectos' : 'Activar efectos'}
+        >
+          {soundEnabled ? <Volume2 size={22} /> : <VolumeX size={22} />}
+        </button>
 
-        {/* Logo Title */}
-        <div className="logo-group">
-          <h1 className="game-title">
-            BUNNY <span className="title-highlight">HOP</span>
-          </h1>
-          <p className="game-subtitle">Pequeñas zanahorias, grandes aventuras</p>
-        </div>
+        <button
+          type="button"
+          onClick={handleToggleMusic}
+          className={`btn-icon main-menu-icon ${!musicEnabled ? 'btn-disabled' : ''}`}
+          title="Música de Fondo"
+          aria-label={musicEnabled ? 'Silenciar música' : 'Activar música'}
+        >
+          <Music size={22} />
+        </button>
 
-        {/* High Score Badge */}
+        <button
+          type="button"
+          onClick={onOpenHelp}
+          className="btn-icon main-menu-icon"
+          title="Cómo Jugar"
+          aria-label="Cómo jugar"
+        >
+          <HelpCircle size={22} />
+        </button>
+      </div>
+
+      <div className="main-menu-launch">
         {highScore > 0 && (
-          <div className="high-score-badge">
+          <div className="high-score-badge main-menu-high-score">
             <Award size={18} className="text-yellow-400" />
             <span>Récord: {highScore} pts</span>
           </div>
         )}
 
-        {/* Action Buttons */}
-        <div className="menu-actions">
-          <button onClick={handleStart} className="btn-primary btn-play">
-            <Play size={24} fill="currentColor" />
-            <span>¡JUGAR!</span>
-          </button>
+        <button
+          type="button"
+          onClick={handleStart}
+          className="btn-primary btn-play main-menu-play"
+        >
+          <Play size={32} fill="currentColor" />
+          <span>PLAY</span>
+        </button>
 
-          <button onClick={onOpenHelp} className="btn-secondary">
-            <HelpCircle size={20} />
-            <span>Cómo Jugar</span>
-          </button>
-        </div>
-
-        {/* Audio Toggles */}
-        <div className="menu-audio-toggles">
-          <button
-            onClick={toggleSound}
-            className={`btn-icon ${!soundEnabled ? 'btn-disabled' : ''}`}
-            title="Efectos de Sonido"
-          >
-            {soundEnabled ? <Volume2 size={20} /> : <VolumeX size={20} />}
-          </button>
-
-          <button
-            onClick={handleToggleMusic}
-            className={`btn-icon ${!musicEnabled ? 'btn-disabled' : ''}`}
-            title="Música de Fondo"
-          >
-            <Music size={20} />
-          </button>
-        </div>
-
-        {/* World Preview Badge */}
-        <div className="menu-world-tag">
+        <div className="menu-world-tag main-menu-world-tag">
           Mundo 1: Pradera Soleada
         </div>
       </div>

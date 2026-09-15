@@ -324,7 +324,7 @@ export const LEVEL_1_CONFIG: LevelConfig = {
     { type: "bee", x: 1300, y: 410 },
     { type: "ladybug", x: 1980, y: 540 },
     { type: "ladybug", x: 3330, y: 510, variant: "aggressive" },
-    { type: "bee", x: 1500, y: 500, variant: "aggressive" },
+    { type: "bee", x: 1650, y: 500, variant: "aggressive" },
     { type: "snail", x: 4480, y: 540 },
     { type: "bee", x: 4300, y: 420 },
     { type: "ladybug", x: 4850, y: 540 },

@@ -50,7 +50,11 @@ export class GameScene extends Phaser.Scene {
     const config = this.currentLevelConfig;
 
     // Reset store stats for this level
+    const gameStateBeforeReset = useGameStore.getState().gameState;
     useGameStore.getState().resetLevelStats(config.carrots.length);
+    if (gameStateBeforeReset !== "PLAYING") {
+      useGameStore.getState().setGameState(gameStateBeforeReset);
+    }
 
     // Set world physics bounds
     this.physics.world.setBounds(
@@ -67,6 +71,7 @@ export class GameScene extends Phaser.Scene {
     audioManager.initPhaserSound(
       this.sound,
       this.cache.audio.exists("bg_music_world_1"),
+      this.cache.audio.exists("main_title_music"),
     );
 
     // Build Parallax Layers
@@ -105,13 +110,21 @@ export class GameScene extends Phaser.Scene {
     // Camera Configuration (phaser-cameras deadzone)
     this.setupCamera(config);
 
+    // The world is prebuilt behind React overlays, so freeze Arcade Physics
+    // until the player explicitly starts or resumes the level.
+    if (useGameStore.getState().gameState !== "PLAYING") {
+      this.physics.pause();
+    }
+
     // Keyboard shortcuts (e.g. ESC for pause)
     const onEsc = () => {
       const state = useGameStore.getState().gameState;
       if (state === "PLAYING") {
         useGameStore.getState().setGameState("PAUSED");
+        audioManager.syncMusic();
       } else if (state === "PAUSED") {
         useGameStore.getState().setGameState("PLAYING");
+        audioManager.syncMusic();
       }
     };
     this.input.keyboard?.on("keydown-ESC", onEsc);
@@ -395,8 +408,15 @@ export class GameScene extends Phaser.Scene {
   public update(time: number, delta: number): void {
     const gameState = useGameStore.getState().gameState;
 
-    if (gameState === "PAUSED") {
+    if (gameState !== "PLAYING") {
+      if (!this.physics.world.isPaused) {
+        this.physics.pause();
+      }
       return;
+    }
+
+    if (this.physics.world.isPaused) {
+      this.physics.resume();
     }
 
     // Slowly scroll clouds across sky

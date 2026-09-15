@@ -51,34 +51,34 @@ export const App: React.FC = () => {
 
   // Handle Game Restart
   const handleRestart = () => {
+    setGameState('PLAYING');
     if (gameScene) {
       resetLevelStats();
       gameScene.scene.restart();
     }
     audioManager.syncMusic();
-    setGameState('PLAYING');
   };
 
   // Handle Start Game from Menu
   const handleStartGame = () => {
+    setGameState('PLAYING');
     if (gameScene) {
       resetLevelStats();
       gameScene.scene.restart();
     }
     audioManager.syncMusic();
-    setGameState('PLAYING');
   };
 
   // Handle Resume Game from Pause
   const handleResume = () => {
-    audioManager.syncMusic();
     setGameState('PLAYING');
+    audioManager.syncMusic();
   };
 
   // Handle Return to Main Menu
   const handleHome = () => {
-    audioManager.stopBGM();
     setGameState('MENU');
+    audioManager.syncMusic();
   };
 
   return (

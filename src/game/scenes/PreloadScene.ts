@@ -2,6 +2,7 @@ import Phaser from "phaser";
 import { AssetGenerator } from "../assets/assetGenerator";
 import { GROUND_ELEMENTS_LIST } from "../config/groundElements";
 import { ENVIRONMENT_ELEMENTS_LIST } from "../config/environmentElements";
+import { audioManager } from "../systems/AudioManager";
 
 export class PreloadScene extends Phaser.Scene {
   constructor() {
@@ -118,10 +119,19 @@ export class PreloadScene extends Phaser.Scene {
       "bg_music_world_1",
       "/assets/music/background_music/bg_music_world_1.mp3",
     );
+    this.load.audio(
+      "main_title_music",
+      "/assets/music/background_music/main_title.mp3",
+    );
   }
 
   public create(): void {
     this.createAnimations();
+    audioManager.initPhaserSound(
+      this.sound,
+      this.cache.audio.exists("bg_music_world_1"),
+      this.cache.audio.exists("main_title_music"),
+    );
     this.scene.start("GameScene");
   }
 

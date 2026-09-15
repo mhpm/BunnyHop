@@ -5,10 +5,14 @@ class AudioManager {
   private ctx: AudioContext | null = null;
   private soundManager: Phaser.Sound.BaseSoundManager | null = null;
   private bgmSound: Phaser.Sound.BaseSound | null = null;
+  private mainTitleSound: Phaser.Sound.BaseSound | null = null;
   private bgmPlaying = false;
+  private mainTitlePlaying = false;
   private bgmAudio: HTMLAudioElement | null = null;
+  private mainTitleAudio: HTMLAudioElement | null = null;
   private lastSkidTime = 0;
   private readonly bgmSrc = '/assets/music/background_music/bg_music_world_1.mp3';
+  private readonly mainTitleSrc = '/assets/music/background_music/main_title.mp3';
 
   constructor() {
     // Lazy initialize AudioContext on user interaction
@@ -310,9 +314,11 @@ class AudioManager {
   public initPhaserSound(
     sound: Phaser.Sound.BaseSoundManager,
     hasBgmAsset = true,
+    hasMainTitleAsset = true,
   ): void {
     if (this.soundManager !== sound) {
       this.bgmSound = null;
+      this.mainTitleSound = null;
     }
 
     this.soundManager = sound;
@@ -330,10 +336,26 @@ class AudioManager {
       }
     }
 
+    if (hasMainTitleAsset && !this.mainTitleSound) {
+      const existing = this.soundManager.get('main_title_music');
+      if (existing) {
+        this.mainTitleSound = existing;
+      } else {
+        this.mainTitleSound = this.soundManager.add('main_title_music', {
+          loop: true,
+          volume: 0.5,
+        });
+      }
+    }
+
     // Detener cualquier fallback HTML5 previo para evitar sonidos duplicados
     if (this.bgmAudio) {
       this.bgmAudio.pause();
       this.bgmAudio.currentTime = 0;
+    }
+    if (this.mainTitleAudio) {
+      this.mainTitleAudio.pause();
+      this.mainTitleAudio.currentTime = 0;
     }
 
     // Sincronizar estado actual
@@ -351,7 +373,19 @@ class AudioManager {
     return this.bgmAudio;
   }
 
+  private getMainTitleAudio(): HTMLAudioElement | null {
+    if (typeof Audio === 'undefined') return null;
+    if (!this.mainTitleAudio) {
+      this.mainTitleAudio = new Audio(this.mainTitleSrc);
+      this.mainTitleAudio.loop = true;
+      this.mainTitleAudio.volume = 0.5;
+      this.mainTitleAudio.preload = 'auto';
+    }
+    return this.mainTitleAudio;
+  }
+
   public startBGM(): void {
+    this.stopMainTitleMusic();
     if (!useGameStore.getState().musicEnabled) return;
     this.bgmPlaying = true;
 
@@ -390,6 +424,49 @@ class AudioManager {
     }
   }
 
+  public startMainTitleMusic(): void {
+    this.stopBGM();
+    if (!useGameStore.getState().musicEnabled) return;
+    this.mainTitlePlaying = true;
+
+    if (this.soundManager && this.mainTitleSound) {
+      if (this.mainTitleSound.isPaused) {
+        this.mainTitleSound.resume();
+        return;
+      }
+
+      if (!this.mainTitleSound.isPlaying) {
+        if (this.soundManager.locked) {
+          this.soundManager.once('unlocked', () => {
+            const state = useGameStore.getState();
+            if (
+              this.mainTitlePlaying &&
+              state.musicEnabled &&
+              state.gameState === 'MENU' &&
+              !this.mainTitleSound?.isPlaying
+            ) {
+              this.mainTitleSound?.play();
+            }
+          });
+        } else {
+          this.mainTitleSound.play();
+        }
+      }
+      return;
+    }
+
+    const audio = this.getMainTitleAudio();
+    if (!audio) return;
+
+    audio.loop = true;
+    const playPromise = audio.play();
+    if (playPromise !== undefined) {
+      void playPromise.catch(() => {
+        // Browsers may wait for the first user gesture before starting music.
+      });
+    }
+  }
+
   public pauseBGM(): void {
     this.bgmPlaying = false;
     if (this.bgmSound && this.bgmSound.isPlaying) {
@@ -411,12 +488,43 @@ class AudioManager {
     }
   }
 
+  public pauseMainTitleMusic(): void {
+    this.mainTitlePlaying = false;
+    if (this.mainTitleSound && this.mainTitleSound.isPlaying) {
+      this.mainTitleSound.pause();
+    }
+    if (this.mainTitleAudio) {
+      this.mainTitleAudio.pause();
+    }
+  }
+
+  public stopMainTitleMusic(): void {
+    this.mainTitlePlaying = false;
+    if (this.mainTitleSound) {
+      this.mainTitleSound.stop();
+    }
+    if (this.mainTitleAudio) {
+      this.mainTitleAudio.pause();
+      this.mainTitleAudio.currentTime = 0;
+    }
+  }
+
   public syncMusic(): void {
-    const musicOn = useGameStore.getState().musicEnabled;
-    if (musicOn && !this.bgmPlaying) {
-      this.startBGM();
-    } else if (!musicOn && this.bgmPlaying) {
+    const { gameState, musicEnabled } = useGameStore.getState();
+
+    if (!musicEnabled) {
       this.pauseBGM();
+      this.pauseMainTitleMusic();
+      return;
+    }
+
+    if (gameState === 'MENU') {
+      this.startMainTitleMusic();
+    } else if (gameState === 'PLAYING') {
+      this.startBGM();
+    } else {
+      this.pauseBGM();
+      this.pauseMainTitleMusic();
     }
   }
 }
