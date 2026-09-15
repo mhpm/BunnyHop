@@ -90,6 +90,18 @@ export class PreloadScene extends Phaser.Scene {
       "enemy_ladybug_dead",
       "/assets/sprites/enemies/ladybug/ladydie.png",
     );
+    this.load.spritesheet(
+      "enemy_bee_flying",
+      "/assets/sprites/enemies/bee/bee_flying.png",
+      {
+        frameWidth: 256,
+        frameHeight: 256,
+      },
+    );
+    this.load.image(
+      "enemy_bee_dead",
+      "/assets/sprites/enemies/bee/bee_die.png",
+    );
 
     // 4. Load Parallax Background & Foreground
     this.load.image("game_background", "/assets/background/background.png");
@@ -178,6 +190,15 @@ export class PreloadScene extends Phaser.Scene {
       frames: this.anims.generateFrameNumbers("enemy_ladybug", {
         start: 0,
         end: 3,
+      }),
+      frameRate: 8,
+      repeat: -1,
+    });
+    this.anims.create({
+      key: "enemy_bee_flying",
+      frames: this.anims.generateFrameNumbers("enemy_bee_flying", {
+        start: 0,
+        end: 2,
       }),
       frameRate: 8,
       repeat: -1,

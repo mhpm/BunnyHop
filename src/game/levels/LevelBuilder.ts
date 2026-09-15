@@ -4,6 +4,7 @@ import { BreakableBox } from "../objects/BreakableBox";
 import { GoalShrine } from "../objects/GoalShrine";
 import { Enemy } from "../entities/Enemy";
 import { Ladybug } from "../entities/Ladybug";
+import { Bee } from "../entities/Bee";
 import { Caterpillar } from "../entities/Caterpillar";
 import { Snail } from "../entities/Snail";
 import { Beetle } from "../entities/Beetle";
@@ -306,7 +307,7 @@ export class LevelBuilder {
   }
 
   /**
-   * Crea un enemigo según su tipo ('ladybug' | 'caterpillar' | 'snail' | 'beetle').
+   * Crea un enemigo según su tipo ('ladybug' | 'bee' | 'caterpillar' | 'snail' | 'beetle').
    *
    * @param type Tipo de enemigo.
    * @param x Posición X inicial.
@@ -324,6 +325,9 @@ export class LevelBuilder {
     switch (type) {
       case "ladybug":
         enemy = new Ladybug(scene, x, y, particles, variant);
+        break;
+      case "bee":
+        enemy = new Bee(scene, x, y, particles, variant);
         break;
       case "caterpillar":
         enemy = new Caterpillar(scene, x, y, particles);

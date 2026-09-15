@@ -93,10 +93,10 @@ export interface PropConfig {
 export type PropType = PropConfig["type"];
 
 export interface EnemyConfig {
-  type: "ladybug" | "caterpillar" | "snail" | "beetle";
+  type: "ladybug" | "bee" | "caterpillar" | "snail" | "beetle";
   x: number;
   y: number;
-  /** Solo aplica a las ladybugs. Las agresivas corren más y saltan. */
+  /** Aplica a ladybugs y bees. Las variantes agresivas son más rápidas. */
   variant?: "normal" | "aggressive";
 }
 
@@ -321,17 +321,24 @@ export const LEVEL_1_CONFIG: LevelConfig = {
   enemies: [
     { type: "ladybug", x: 780, y: 540 },
     { type: "ladybug", x: 1180, y: 540, variant: "aggressive" },
+    { type: "bee", x: 1300, y: 410 },
     { type: "ladybug", x: 1980, y: 540 },
     { type: "ladybug", x: 3330, y: 510, variant: "aggressive" },
+    { type: "bee", x: 1500, y: 500, variant: "aggressive" },
     { type: "snail", x: 4480, y: 540 },
+    { type: "bee", x: 4300, y: 420 },
     { type: "ladybug", x: 4850, y: 540 },
     { type: "ladybug", x: 5140, y: 540 },
     { type: "ladybug", x: 6100, y: 540, variant: "aggressive" },
+    { type: "bee", x: 5700, y: 380, variant: "aggressive" },
     { type: "caterpillar", x: 7460, y: 540 },
+    { type: "bee", x: 7350, y: 410 },
     { type: "ladybug", x: 7700, y: 540 },
     { type: "beetle", x: 8050, y: 540 },
     { type: "ladybug", x: 8750, y: 480, variant: "aggressive" },
+    { type: "bee", x: 8400, y: 370, variant: "aggressive" },
     { type: "ladybug", x: 9680, y: 540 },
+    { type: "bee", x: 9300, y: 410 },
   ],
 
   boxes: [],
